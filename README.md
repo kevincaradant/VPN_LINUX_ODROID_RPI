@@ -18,10 +18,12 @@ If you create a profile , you will gain time for the next installation if you wo
 Press "4" in the main menu 
 
 
-CREATE / GET CLIENT ?
-To create a client , use the option "2" in the main menu and just enter a name of client. 
+##CREATE / GET CLIENT##
+###Create a client###
+->Use the option "2" in the main menu and just enter a name of client. 
 
-On the client computer : You have to get three files ( use FTP with filezilla by example)
+###On the client computer###
+->You have to get three files ( use FTP with filezilla by example)
 	- NAME_CLIENT.crt
 	- NAME_CLIENT.key
 	- ca.crt
@@ -29,3 +31,5 @@ from /etc/openvpn/easy-rsa/keys. That's all.
 
 
 Sorry if the description is light , it's my first personal repository 
+
+## PS : ASAP , i will change the script for EASY-RSA 3 ##
