@@ -46,6 +46,7 @@ echo "tls-auth Private Key found: $TA"
 #default file 
 cat $DEFAULT > $NAME$FILEEXT
 echo  "resolv-retry infinite" >> $NAME$FILEEXT
+echo  "ns-cert-type server" >> $NAME$FILEEXT
 echo  "nobind" >> $NAME$FILEEXT
 echo  "ca ca.crt" >> $NAME$FILEEXT
 echo  "cert "$NAME".crt" >> $NAME$FILEEXT

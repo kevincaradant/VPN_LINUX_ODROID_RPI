@@ -370,38 +370,42 @@ do
 		apt-get upgrade -y
 
 		#cd ./scriptVPN_linux
-		mkdir /etc/openvpn/easy-rsa
-		cp $racine/easy-rsa/* /etc/openvpn/easy-rsa
+		mkdir /etc/openvpn/easyrsa3
+		mv /easyrsa3/* /etc/openvpn/easyrsa3
+		cd /etc/openvpn/easyrsa3
+		cp vars.example vars
 
 		# edit the file /etc/openvpn/easy-rsa/vars
-		sed -i.bak 's/export EASY_RSA=".*"/export EASY_RSA="\/etc\/openvpn\/easy-rsa"/i' /etc/openvpn/easy-rsa/vars;
+		sed -i.bak 's/#set_var EASYRSA=".*"/set_var EASYRSA="\/etc\/openvpn\/easyrsa3"/i' /etc/openvpn/easyrsa3/vars;
 
 		#edit vars and put the number cryptage of the key
-		sed -i.bak 's/export KEY_SIZE=.*/export KEY_SIZE='$cryptvpn'/i' /etc/openvpn/easy-rsa/vars;
+		sed -i.bak 's/#set_var EASYRSA_KEY_SIZE=.*/set_var EASYRSA_KEY_SIZE='$cryptvpn'/i' /etc/openvpn/easyrsa3/vars;
 
-		sed -i.bak 's/export KEY_COUNTRY=.*/export KEY_COUNTRY="'$countryvpn'"/i' /etc/openvpn/easy-rsa/vars;
-		sed -i.bak 's/export KEY_PROVINCE=.*/export KEY_PROVINCE="'$provincevpn'"/i' /etc/openvpn/easy-rsa/vars;
-		sed -i.bak 's/export KEY_CITY=.*/export KEY_CITY="'$cityvpn'"/i' /etc/openvpn/easy-rsa/vars;
-		sed -i.bak 's/export KEY_ORG=.*/export KEY_ORG="'$orgvpn'"/i' /etc/openvpn/easy-rsa/vars;
-		sed -i.bak 's/export KEY_EMAIL=.*/export KEY_EMAIL="'$mailvpn'"/i' /etc/openvpn/easy-rsa/vars;
-		sed -i.bak 's/export KEY_OU=.*/export KEY_OU="'$ounvpn'"/i' /etc/openvpn/easy-rsa/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_COUNTRY=.*/set_var EASYRSA_REQ_COUNTRY="'$countryvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_PROVINCE=.*/set_var EASYRSA_REQ_PROVINCE="'$provincevpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_CITY=.*/set_var EASYRSA_REQ_CITY="'$cityvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_ORG=.*/set_var EASYRSA_REQ_ORG="'$orgvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_EMAIL=.*/set_var EASYRSA_REQ_EMAIL="'$mailvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_OU=.*/set_var EASYRSA_REQ_OU="'$ounvpn'"/i' /etc/openvpn/easyrsa3/vars;
 
 		# build CA certificate and root ca certificate
-		cd /etc/openvpn/easy-rsa/
-		source ./vars
-		./clean-all
+		./easyrsa init-pki
+		./easyrsa build-ca
 		
 		#Generate Diffie-Hellman key exchange
-		cd /etc/openvpn/easy-rsa/
-		./build-dh # this will take like 5 minutes 
-		
-		./pkitool --initca
+		./easyrsa build-server-full <$namevpn> [nopass]
 
-		#build the key server
-		./pkitool --server $namevpn
+		#move file in /etc/openvpn
+		cp pki/ca.crt /etc/openvpn
+		cp pki/private/$namevpn.key /etc/openvpn
+		cp pki/issued/$namevpn.crt /etc/openvpn
+		cp pki/reqs/$namevpn.req /etc/openvpn
 
-		#generate a static HMAC key to be used later when creating 		client configuration file. This is used to prevent DOS attacks.
-		openvpn --genkey --secret keys/ta.key
+		#generate  Diffie-Hellman
+		./easyrsa gen-dh
+
+		#move file in /etc/openvpn
+		cp pki/dh.pem /etc/openvpn
 
 		#create server.conf
 cat <<EOF > /etc/openvpn/server.conf
@@ -413,13 +417,14 @@ persist-key
 persist-tun
 keepalive 10 20
 server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
 push "redirect-gateway def1 bypass-dhcp"
 push "dhcp-option DNS 8.8.8.8"
 push "dhcp-option DNS 8.8.4.4"
-ca /etc/openvpn/easy-rsa/keys/ca.crt 
-cert /etc/openvpn/easy-rsa/keys/$namevpn.crt
-key /etc/openvpn/easy-rsa/keys/$namevpn.key
-dh /etc/openvpn/easy-rsa/keys/dh$cryptvpn.pem
+ca ca.crt 
+cert $namevpn.crt
+key $namevpn.key
+dh dh.pem
 status openvpn-status.log
 verb 3
 EOF
@@ -469,18 +474,17 @@ EOF
 	service openvpn start
 
 	#initialize the config for client
-	cd /etc/openvpn/easy-rsa
+	cd /etc/openvpn/easyrsa3
 	source vars
 
-cat <<EOF > /etc/openvpn/easy-rsa/keys/Default.txt
+cat <<EOF > /etc/openvpn/Default.txt
 client
 dev tun
 proto $protovpn
 remote $ippublicvpn $portvpn
 EOF
 
-	cp  $racine/makeOVPN.sh /etc/openvpn/easy-rsa/keys/
-	chmod 700 /etc/openvpn/easy-rsa/keys/makeOVPN.sh
+	cp  $racine/makeOVPN.sh /etc/openvpn/
 	chmod 777 -R /etc/openvpn
 
 	#reboot to finish to install some last things	
@@ -496,12 +500,12 @@ EOF
 		read -e -p "$nameclient" nameclient
 
 		#build the  key  but without pass
-		cd /etc/openvpn/easy-rsa/
+		cd /etc/openvpn/easyrsa3/
 		source ./vars
-		./pkitool  $nameclient
+		./easyrsa build-client-full <$nameclient> [nopass]
 
 		# start the script to create the client
-		cd /etc/openvpn/easy-rsa/keys
+		cd /etc/openvpn
 		./makeOVPN.sh
 		chmod 777 -R /etc/openvpn
 
