@@ -159,7 +159,7 @@ ask_info(){
 ask_save_profil(){
 	if [ ! -f $racine/$profileTxt ]; then
 ask_info
-cat <<EOF > $profileTxt
+cat <<EOF > $racine/$profileTxt
 $namevpn
 $ipvpn
 $ippublicvpn
@@ -194,7 +194,7 @@ read_profile_file(){
 	declare -a INFO
 	while IFS='' read -r line || [[ -n "$line" ]]; do
 		INFO+=($line)
-	done < $profileTxt
+	done < $racine/$profileTxt
 
 	#load info in variable appropriate
 	namevpn=${INFO[0]}
@@ -369,7 +369,7 @@ do
 
 		#cd ./scriptVPN_linux
 		mkdir /etc/openvpn/easyrsa3
-		cp -r easyrsa3/* /etc/openvpn/easyrsa3
+		cp -r $racine/easyrsa3/* /etc/openvpn/easyrsa3
 		cd /etc/openvpn/easyrsa3
 		cp vars.example vars
 
@@ -397,7 +397,7 @@ yes
 		chmod 777 /etc/openvpn/client
 
 		#move file in /etc/openvpn
-		cp pki/ca.crt /etc/openvpn/client
+		cp pki/ca.crt /etc/openvpn
 		cp pki/private/$namevpn.key /etc/openvpn
 		cp pki/issued/$namevpn.crt /etc/openvpn
 		cp pki/reqs/$namevpn.req /etc/openvpn
@@ -506,13 +506,14 @@ EOF
 		mkdir /etc/openvpn/client/$nameclient
 		chmod 777 /etc/openvpn/client/$nameclient
 
-                cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
+                cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
+		cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
                 cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
                 cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
 
 		# start the script to create the client
 		cd /etc/openvpn
-		./makeOVPN.sh
+		./makeOVPN.sh $nameclient
 		chmod 777 -R /etc/openvpn
 
 		loop=1

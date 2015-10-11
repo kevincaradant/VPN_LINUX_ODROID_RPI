@@ -6,11 +6,7 @@ FILEEXT=".ovpn"
 CRT=".crt" 
 KEY=".key" 
 CA="ca.crt" 
- 
-#Ask for a Client name 
-echo "Please enter an existing Client Name:"
-read NAME 
- 
+NAME=$1 
  
 #1st Verify that client’s Public Key Exists 
 if [ ! -f easyrsa3/pki/issued/$NAME$CRT ]; then 
@@ -38,14 +34,14 @@ echo "CA public Key found: $CA"
  
 #Ready to make a new .opvn file - Start by populating with the 
 #default file 
-cat $DEFAULT > ./$NAME/$NAME$FILEEXT
-echo  "resolv-retry infinite" >> ./$NAME/$NAME$FILEEXT
-echo  "ns-cert-type server" >> ./$NAME/$NAME$FILEEXT
-echo  "nobind" >> ./$NAME/$NAME$FILEEXT
-echo  "ca ca.crt" >> ./$NAME/$NAME$FILEEXT
-echo  "cert "$NAME".crt" >> ./$NAME/$NAME$FILEEXT
-echo  "key "$NAME".key" >> ./$NAME/$NAME$FILEEXT
-echo  "persist-key" >> ./$NAME/$NAME$FILEEXT
-echo  "persist-tun" >> ./$NAME/$NAME$FILEEXT
-echo  "comp-lzo" >> ./$NAME/$NAME$FILEEXT
-echo  "verb 3" >> ./$NAME/$NAME$FILEEXT
+cat $DEFAULT > ./client/$NAME/$NAME$FILEEXT
+echo  "resolv-retry infinite" >> ./client/$NAME/$NAME$FILEEXT
+echo  "ns-cert-type server" >> ./client/$NAME/$NAME$FILEEXT
+echo  "nobind" >> ./client/$NAME/$NAME$FILEEXT
+echo  "ca ca.crt" >> ./client/$NAME/$NAME$FILEEXT
+echo  "cert "$NAME".crt" >> ./client/$NAME/$NAME$FILEEXT
+echo  "key "$NAME".key" >> ./client/$NAME/$NAME$FILEEXT
+echo  "persist-key" >> ./client/$NAME/$NAME$FILEEXT
+echo  "persist-tun" >> ./client/$NAME/$NAME$FILEEXT
+echo  "comp-lzo" >> ./client/$NAME/$NAME$FILEEXT
+echo  "verb 3" >> ./client/$NAME/$NAME$FILEEXT
