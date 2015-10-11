@@ -1,4 +1,4 @@
-#VPN_LINUX_ODROID_RPI#
+#VPN_LINUX_ODROID_RPI_EASY_RSA3#
 
 ##INTRO##
 You want to create a script VPN very easily ? This script is for you.
@@ -31,16 +31,16 @@ If you have delete by error or anything else reasons, you can restore it by pres
 
 ##CREATE / GET CLIENT##
 ###Create a client###
-Use the option "2" in the main menu and just enter a name of client. 
+Use the option 2 in the main menu and just enter a name of client. 
 
 ###On the client computer###
 You have to get three files ( use FTP with filezilla by example)
 - NAME_CLIENT.crt
 - NAME_CLIENT.key
 - ca.crt
-from /etc/openvpn/easy-rsa/keys. That's all.
+- NAME_CLIENT.OVPN
+from /etc/openvpn/client/NAME_CLIENT. That's all.
 
 
 Sorry if the description is light , it's my first personal repository 
 
-## PS : ASAP , i will change the script for EASY-RSA 3 ##
