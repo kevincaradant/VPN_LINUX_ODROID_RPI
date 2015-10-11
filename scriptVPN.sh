@@ -16,7 +16,7 @@ install_prog_required(){
 initialiaze_variable(){
 	#preload l'ensemble des variables
 	namevpn=MyVPNServer
-	ipvpn=$(hostname -I)
+	ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
 	ippublicvpn=$(wget -qO- http://ipecho.net/plain ; echo);
 	portvpn=443
 	protovpn=tcp
@@ -28,7 +28,6 @@ initialiaze_variable(){
 	ounvpn=N/A
 	commonvpn=MyVPNServer
 	mailvpn=mail@example.com
-	ouvpn=N/A
 
 	#init variable
 	# allow to swich data for profile
@@ -45,7 +44,6 @@ initialiaze_variable(){
 	unset ounvpn1
 	unset commonvpn1
 	unset mailvpn1
-	unset ouvpn1
 }
 
 
@@ -366,43 +364,43 @@ do
 		apt-get install -y openvpn
 
 	  	#update and upgrade to install new dependances and librairies
-		apt-get update
-		apt-get upgrade -y
+#		apt-get update
+#		apt-get upgrade -y
 
 		#cd ./scriptVPN_linux
 		mkdir /etc/openvpn/easyrsa3
-		mv /easyrsa3/* /etc/openvpn/easyrsa3
+		cp -r easyrsa3/* /etc/openvpn/easyrsa3
 		cd /etc/openvpn/easyrsa3
 		cp vars.example vars
 
-		# edit the file /etc/openvpn/easy-rsa/vars
-		sed -i.bak 's/#set_var EASYRSA=".*"/set_var EASYRSA="\/etc\/openvpn\/easyrsa3"/i' /etc/openvpn/easyrsa3/vars;
-
 		#edit vars and put the number cryptage of the key
-		sed -i.bak 's/#set_var EASYRSA_KEY_SIZE=.*/set_var EASYRSA_KEY_SIZE='$cryptvpn'/i' /etc/openvpn/easyrsa3/vars;
-
-		sed -i.bak 's/#set_var EASYRSA_REQ_COUNTRY=.*/set_var EASYRSA_REQ_COUNTRY="'$countryvpn'"/i' /etc/openvpn/easyrsa3/vars;
-		sed -i.bak 's/#set_var EASYRSA_REQ_PROVINCE=.*/set_var EASYRSA_REQ_PROVINCE="'$provincevpn'"/i' /etc/openvpn/easyrsa3/vars;
-		sed -i.bak 's/#set_var EASYRSA_REQ_CITY=.*/set_var EASYRSA_REQ_CITY="'$cityvpn'"/i' /etc/openvpn/easyrsa3/vars;
-		sed -i.bak 's/#set_var EASYRSA_REQ_ORG=.*/set_var EASYRSA_REQ_ORG="'$orgvpn'"/i' /etc/openvpn/easyrsa3/vars;
-		sed -i.bak 's/#set_var EASYRSA_REQ_EMAIL=.*/set_var EASYRSA_REQ_EMAIL="'$mailvpn'"/i' /etc/openvpn/easyrsa3/vars;
-		sed -i.bak 's/#set_var EASYRSA_REQ_OU=.*/set_var EASYRSA_REQ_OU="'$ounvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_KEY_SIZE.*/set_var EASYRSA_KEY_SIZE '$cryptvpn'/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_COUNTRY.*/set_var EASYRSA_REQ_COUNTRY "'$countryvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_PROVINCE.*/set_var EASYRSA_REQ_PROVINCE "'$provincevpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_CITY.*/set_var EASYRSA_REQ_CITY "'$cityvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_ORG.*/set_var EASYRSA_REQ_ORG "'$orgvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_EMAIL.*/set_var EASYRSA_REQ_EMAIL "'$mailvpn'"/i' /etc/openvpn/easyrsa3/vars;
+		sed -i.bak 's/#set_var EASYRSA_REQ_OU.*/set_var EASYRSA_REQ_OU "'$ounvpn'"/i' /etc/openvpn/easyrsa3/vars;
 
 		# build CA certificate and root ca certificate
-		./easyrsa init-pki
-		./easyrsa build-ca
-		
+./easyrsa init-pki <<!
+yes
+!
+		./easyrsa --batch build-ca nopass
+
 		#Generate Diffie-Hellman key exchange
-		./easyrsa build-server-full <$namevpn> [nopass]
+		./easyrsa build-server-full $namevpn nopass
+		 #generate  Diffie-Hellman
+                ./easyrsa gen-dh
+
+		mkdir /etc/openvpn/client
+		chmod 777 /etc/openvpn/client
 
 		#move file in /etc/openvpn
-		cp pki/ca.crt /etc/openvpn
+		cp pki/ca.crt /etc/openvpn/client
 		cp pki/private/$namevpn.key /etc/openvpn
 		cp pki/issued/$namevpn.crt /etc/openvpn
 		cp pki/reqs/$namevpn.req /etc/openvpn
-
-		#generate  Diffie-Hellman
-		./easyrsa gen-dh
 
 		#move file in /etc/openvpn
 		cp pki/dh.pem /etc/openvpn
@@ -502,7 +500,15 @@ EOF
 		#build the  key  but without pass
 		cd /etc/openvpn/easyrsa3/
 		source ./vars
-		./easyrsa build-client-full <$nameclient> [nopass]
+		./easyrsa build-client-full $nameclient nopass
+
+		#move file in /etc/openvpn
+		mkdir /etc/openvpn/client/$nameclient
+		chmod 777 /etc/openvpn/client/$nameclient
+
+                cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
+                cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
+                cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
 
 		# start the script to create the client
 		cd /etc/openvpn
