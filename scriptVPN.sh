@@ -344,19 +344,26 @@ do
 		"1" )
 			if [ -f $racine/$profileTxt ]
 			then
+				unset profile
+				unset reponse
 				read_profile_file
-
+				
 			else
 				echo -e "\033[31m----------------\033[0m"
 				echo -e "\033[1;31mNO PROFILE FOUND\033[0m"
 				echo -e "\033[31m----------------\033[0m"
+				unset profile
+				unset reponse
 				ask_info
 			fi
 		;;
 
 		"2" )
+			unset profile
+			unset reponse
 			ask_info
-			loop=1
+			#loop=1
+		
 		;;
 		esac
 
@@ -501,7 +508,7 @@ EOF
 		cd /etc/openvpn/easyrsa3/
 		source ./vars
 		./easyrsa build-client-full $nameclient nopass
-
+v
 		#move file in /etc/openvpn
 		mkdir /etc/openvpn/client/$nameclient
 		chmod 777 /etc/openvpn/client/$nameclient
@@ -516,7 +523,7 @@ EOF
 		./makeOVPN.sh $nameclient
 		chmod 777 -R /etc/openvpn
 
-		loop=1
+		#loop=1
 	  ;;
 
 	  "3" )
