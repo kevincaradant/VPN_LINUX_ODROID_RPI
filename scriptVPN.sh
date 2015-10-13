@@ -402,7 +402,7 @@ yes
                 ./easyrsa gen-dh
 
 		mkdir /etc/openvpn/client
-		chmod 777 /etc/openvpn/client
+		chmod 755 /etc/openvpn/client
 
 		#move file in /etc/openvpn
 		cp pki/ca.crt /etc/openvpn
@@ -465,7 +465,7 @@ COMMIT
 -A FORWARD -i tun0 -o eth0 -j ACCEPT
 COMMIT
 EOF
-	chmod 777 /etc/firewall.rules
+	chmod 755 /etc/firewall.rules
 
 cat <<EOF > /etc/init.d/firewall
 #!/bin/sh
@@ -491,11 +491,11 @@ remote $ippublicvpn $portvpn
 EOF
 
 	cp  $racine/makeOVPN.sh /etc/openvpn/
-	chmod 777 -R /etc/openvpn
+	chmod 755 -R /etc/openvpn
 
 	#reboot to finish to install some last things	
 	service openvpn restart
-	chmod 777 -R /etc/openvpn
+	chmod 755 -R /etc/openvpn
 	  ;;
 
 	  "2" )
@@ -512,18 +512,18 @@ EOF
 
 		#move file in /etc/openvpn
 		mkdir /etc/openvpn/client/$nameclient
-		chmod 777 /etc/openvpn/client/$nameclient
+		chmod 755 /etc/openvpn/client/$nameclient
 
-                cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
+        cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
 		cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
-                cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
-                cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
+        cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
+        cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
 
 		# start the script to create the client
 		cd /etc/openvpn
 		./makeOVPN.sh $nameclient
-		chmod 777 -R /etc/openvpn
-		chmod 777 -R /etc/openvpn/pki
+		chmod 755 -R /etc/openvpn
+		chmod 755 -R /etc/openvpn/easyrsa3/pki
 
 		#loop=1
 	  ;;
