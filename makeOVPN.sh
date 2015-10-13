@@ -36,7 +36,7 @@ echo "CA public Key found: $CA"
 #default file 
 cat $DEFAULT > ./client/$NAME/$NAME$FILEEXT
 echo  "resolv-retry infinite" >> ./client/$NAME/$NAME$FILEEXT
-echo  "ns-cert-type server" >> ./client/$NAME/$NAME$FILEEXT
+echo  "remote-cert-tls server" >> ./client/$NAME/$NAME$FILEEXT
 echo  "nobind" >> ./client/$NAME/$NAME$FILEEXT
 echo  "ca ca.crt" >> ./client/$NAME/$NAME$FILEEXT
 echo  "cert "$NAME".crt" >> ./client/$NAME/$NAME$FILEEXT
