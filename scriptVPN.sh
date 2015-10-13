@@ -157,7 +157,8 @@ ask_info(){
 
 
 ask_save_profil(){
-	if [ ! -f $racine/$profileTxt ]; then
+if [ ! -f $racine/$profileTxt ]
+then
 ask_info
 cat <<EOF > $racine/$profileTxt
 $namevpn
@@ -371,8 +372,8 @@ do
 		apt-get install -y openvpn
 
 	  	#update and upgrade to install new dependances and librairies
-#		apt-get update
-#		apt-get upgrade -y
+		apt-get update
+		apt-get upgrade -y
 
 		#cd ./scriptVPN_linux
 		mkdir /etc/openvpn/easyrsa3
@@ -464,7 +465,7 @@ COMMIT
 -A FORWARD -i tun0 -o eth0 -j ACCEPT
 COMMIT
 EOF
-	chmod 755 /etc/firewall.rules
+	chmod 777 /etc/firewall.rules
 
 cat <<EOF > /etc/init.d/firewall
 #!/bin/sh
@@ -494,7 +495,7 @@ EOF
 
 	#reboot to finish to install some last things	
 	service openvpn restart
-
+	chmod 777 -R /etc/openvpn
 	  ;;
 
 	  "2" )
@@ -522,6 +523,7 @@ EOF
 		cd /etc/openvpn
 		./makeOVPN.sh $nameclient
 		chmod 777 -R /etc/openvpn
+		chmod 777 -R /etc/openvpn/pki
 
 		#loop=1
 	  ;;
