@@ -508,7 +508,7 @@ EOF
 		cd /etc/openvpn/easyrsa3/
 		source ./vars
 		./easyrsa build-client-full $nameclient nopass
-v
+
 		#move file in /etc/openvpn
 		mkdir /etc/openvpn/client/$nameclient
 		chmod 777 /etc/openvpn/client/$nameclient
