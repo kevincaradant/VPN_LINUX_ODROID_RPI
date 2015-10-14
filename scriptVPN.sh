@@ -306,6 +306,7 @@ until [ $loop -eq 1 ]
 do
 	reponse=0
 	until [ $reponse -gt 0 > /dev/null 2>&1 ] && [ $reponse -lt 7 > /dev/null 2>&1 ]; do
+	echo  -e "\033[1;33mNB: I SUGGEST YOU TO REBOOT AFTER THE INSTALLATION\033[0m"
 	echo  -e "\033[34m-----------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION VPN/CLIENT\033[0m"
 	echo  -e "\033[34m-----------------------\033[0m"
