@@ -525,6 +525,7 @@ EOF
 		./makeOVPN.sh $nameclient
 		chmod 755 -R /etc/openvpn
 		chmod 755 -R /etc/openvpn/easyrsa3/pki
+		unset nameclient
 
 		#loop=1
 	  ;;
