@@ -7,16 +7,38 @@ install_prog_required(){
 	echo  -e "\033[34m---------------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
 	echo  -e "\033[34m---------------------------\033[0m"
+	apt-get install -y net-tools
 	apt-get install -y iptables
 	apt-get install -y git
 	apt-get install -y wget
 }
 
+install_prog_required_centos(){
+	echo  -e "\033[34m---------------------------\033[0m"
+	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
+	echo  -e "\033[34m---------------------------\033[0m"
+	yum install -y epel-release
+	yum install -y net-tools
+	yum install -y epel-repository
+	yum install -y iptables-services
+	yum install -y git
+	yum install -y wget
+	yum install -y openssl
+}
 
 initialiaze_variable(){
 	#preload l'ensemble des variables
 	namevpn=MyVPNServer
-	ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+	
+	# choose the good request with the OS 
+	if [ -e /etc/debian_version ]; then
+		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+	elif [ -e /etc/centos-release ]; then
+		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet / {print $2}')
+	else
+		unset ipvpn
+	fi
+	
 	ippublicvpn=$(wget -qO- http://ipecho.net/plain ; echo);
 	portvpn=443
 	protovpn=tcp
@@ -47,7 +69,16 @@ initialiaze_variable(){
 }
 
 
-install_prog_required
+if [ -e /etc/debian_version ]; then
+	install_prog_required
+elif [ -e /etc/centos-release ]; then
+	install_prog_required_centos
+else
+	echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
+	exit 4
+fi
+
+
 initialiaze_variable
 
 ask_info(){
@@ -369,12 +400,26 @@ do
 		;;
 		esac
 
-		#install new version of openvpn
-		apt-get install -y openvpn
+		if [ -e /etc/debian_version ]; then
+			#install new version of openvpn
+			apt-get install -y openvpn
 
-	  	#update and upgrade to install new dependances and librairies
-		apt-get update
-		apt-get upgrade -y
+		  	#update and upgrade to install new dependances and librairies
+			apt-get update
+			#apt-get upgrade -y
+
+		elif [ -e /etc/centos-release ]; then
+			#install new version of openvpn
+			yum install -y openvpn
+
+		  	#update and upgrade to install new dependances and librairies
+			#apt-get update
+			#apt-get upgrade -y
+		else
+			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
+			exit 4
+		fi
+		
 
 		#cd ./scriptVPN_linux
 		mkdir /etc/openvpn/easyrsa3
@@ -440,8 +485,8 @@ EOF
 		mkdir -p /dev/net
 		mknod /dev/net/tun c 10 200
 
-		#uncomment the line : ipv4.ip_forward=1
 		sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
+		#uncomment the line : ipv4.ip_forward=1
 
 		#This command configures kernel parameters at runtime. The -p tells it to reload the file with the changes you just made.
 		sysctl -p
@@ -474,11 +519,21 @@ cat <<EOF > /etc/init.d/firewall
 EOF
 
 	chmod 755 /etc/init.d/firewall
-	#Et on indique au système que ce script doit être lancé automatiquement au démarrage du système
-	update-rc.d firewall defaults
+	
+	if [ -e /etc/debian_version ]; then
+		#Et on indique au système que ce script doit être lancé automatiquement au démarrage du système
+		update-rc.d firewall defaults
+		#restart service
+		service openvpn start
+	elif [ -e /etc/centos-release ]; then
+		chkconfig --add /etc/init.d/firewall
+		chkconfig firewall on
+	else
+		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
 
-	#restart service
-	service openvpn start
+	fi
+
+	
 
 	#initialize the config for client
 	cd /etc/openvpn/easyrsa3
@@ -515,10 +570,10 @@ EOF
 		mkdir /etc/openvpn/client/$nameclient
 		chmod 755 /etc/openvpn/client/$nameclient
 
-        cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
+        	cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
 		cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
-        cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
-        cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
+        	cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
+        	cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
 
 		# start the script to create the client
 		cd /etc/openvpn
