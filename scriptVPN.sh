@@ -7,24 +7,68 @@ install_prog_required(){
 	echo  -e "\033[34m---------------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
 	echo  -e "\033[34m---------------------------\033[0m"
+	apt-get update
+	# lib required	
 	apt-get install -y net-tools
 	apt-get install -y iptables
 	apt-get install -y git
 	apt-get install -y wget
+	apt-get install -y openssl
+	# last version of openvpn
+	version=$(openvpn --version);
+
+	if [ ! -f ./openvpn-2.3.10.zip ]; then
+		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
+		unzip openvpn-2.3.10.zip -d ./
+
+		# lib required to compile openvpn 
+		apt-get install gcc make automake autoconf dh-autoreconf file patch perl dh-make debhelper devscripts gnupg lintian quilt libtool pkg-config libssl-dev liblzo2-dev libpam0g-dev libpkcs11-helper1-dev -y
+	
+		#compile and install openvpn
+		autoreconf -vi
+		./configure
+		make
+		make install
+	fi
+	
+	
 }
+
+
 
 install_prog_required_centos(){
 	echo  -e "\033[34m---------------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
 	echo  -e "\033[34m---------------------------\033[0m"
-	yum install -y epel-release
+
+	# lib required	
 	yum install -y net-tools
-	yum install -y epel-repository
 	yum install -y iptables-services
 	yum install -y git
 	yum install -y wget
+	yum install lzo-devel
+	yum install -y unzip
 	yum install -y openssl
+	version=$(openvpn --version);
+
+	# last version of openvpn
+	if [ ! -f ./openvpn-2.3.10.zip ]; then
+		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
+		unzip openvpn-2.3.10.zip -d ./
+
+		# lib required to compile openvpn 
+		yum install gcc make automake autoconf file patch perl gnupg quilt libtool rpm-build autoconf.noarch zlib-devel pam-devel openssl-devel -y
+	
+		#compile and install openvpn
+		autoreconf -vi
+		./configure
+		make
+		make install
+	fi
+
+	
 }
+
 
 initialiaze_variable(){
 	#preload l'ensemble des variables
@@ -34,6 +78,8 @@ initialiaze_variable(){
 	if [ -e /etc/debian_version ]; then
 		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
 	elif [ -e /etc/centos-release ]; then
+		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet / {print $2}')
+	elif [ -e /etc/fedora-release ]; then
 		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet / {print $2}')
 	else
 		unset ipvpn
@@ -72,6 +118,8 @@ initialiaze_variable(){
 if [ -e /etc/debian_version ]; then
 	install_prog_required
 elif [ -e /etc/centos-release ]; then
+	install_prog_required_centos
+elif [ -e /etc/fedora-release ]; then
 	install_prog_required_centos
 else
 	echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
@@ -400,27 +448,6 @@ do
 		;;
 		esac
 
-		if [ -e /etc/debian_version ]; then
-			#install new version of openvpn
-			apt-get install -y openvpn
-
-		  	#update and upgrade to install new dependances and librairies
-			apt-get update
-			#apt-get upgrade -y
-
-		elif [ -e /etc/centos-release ]; then
-			#install new version of openvpn
-			yum install -y openvpn
-
-		  	#update and upgrade to install new dependances and librairies
-			#apt-get update
-			#apt-get upgrade -y
-		else
-			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
-			exit 4
-		fi
-		
-
 		#cd ./scriptVPN_linux
 		mkdir /etc/openvpn/easyrsa3
 		cp -r $racine/easyrsa3/* /etc/openvpn/easyrsa3
@@ -485,12 +512,29 @@ EOF
 		mkdir -p /dev/net
 		mknod /dev/net/tun c 10 200
 
-		sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
+		
 		#uncomment the line : ipv4.ip_forward=1
 
 		#This command configures kernel parameters at runtime. The -p tells it to reload the file with the changes you just made.
 		sysctl -p
-		/etc/init.d/networking reload
+		if [ -e /etc/debian_version ]; then
+			sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
+			/etc/init.d/networking reload
+
+		elif [ -e /etc/centos-release ]; then
+			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
+                    sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
+                    echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+			/etc/init.d/network reload
+
+		elif [ -e /etc/fedora-release ]; then
+			/etc/init.d/network reload
+
+		else
+			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
+
+		fi
+
 
 
 		# We still want the firewall to protect us from most incoming and outgoing network traffi
@@ -526,6 +570,9 @@ EOF
 		#restart service
 		service openvpn start
 	elif [ -e /etc/centos-release ]; then
+		chkconfig --add /etc/init.d/firewall
+		chkconfig firewall on
+	elif [ -e /etc/fedora-release ]; then
 		chkconfig --add /etc/init.d/firewall
 		chkconfig firewall on
 	else
