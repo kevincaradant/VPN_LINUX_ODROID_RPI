@@ -593,10 +593,13 @@ EOF
 		update-rc.d firewall defaults
 		#restart service
 		service openvpn start
+
 	elif [ -e /etc/centos-release ]; then
 		#chkconfig --add /etc/init.d/firewall
 		#chkconfig firewall on
+		echo "nothing to auto start the script for the moment"
 	elif [ -e /etc/fedora-release ]; then
+		echo "nothing to auto start the script for the moment"
 		#chkconfig --add /etc/init.d/firewall
 		#chkconfig firewall on
 	else
