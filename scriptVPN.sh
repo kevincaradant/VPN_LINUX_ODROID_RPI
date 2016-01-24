@@ -25,6 +25,7 @@ install_prog_required(){
 		apt-get install gcc make automake autoconf dh-autoreconf file patch perl dh-make debhelper devscripts gnupg lintian quilt libtool pkg-config libssl-dev liblzo2-dev libpam0g-dev libpkcs11-helper1-dev -y
 	
 		#compile and install openvpn
+		cd openvpn-2.3.10
 		autoreconf -vi
 		./configure
 		make
@@ -46,7 +47,7 @@ install_prog_required_centos(){
 	yum install -y iptables-services
 	yum install -y git
 	yum install -y wget
-	yum install lzo-devel
+	yum install -y lzo-devel
 	yum install -y unzip
 	yum install -y openssl
 	version=$(openvpn --version);
@@ -60,6 +61,7 @@ install_prog_required_centos(){
 		yum install gcc make automake autoconf file patch perl gnupg quilt libtool rpm-build autoconf.noarch zlib-devel pam-devel openssl-devel -y
 	
 		#compile and install openvpn
+		cd openvpn-2.3.10
 		autoreconf -vi
 		./configure
 		make
@@ -130,43 +132,43 @@ fi
 initialiaze_variable
 
 ask_info(){
-        echo  -e "\033[34m--------\033[0m"
-        echo  -e "\033[1;34mREQUIRED!\033[0m"
-        echo  -e "\033[34m--------\033[0m"
-        echo  " "
+	echo  -e "\033[34m--------\033[0m"
+	echo  -e "\033[1;34mREQUIRED!\033[0m"
+	echo  -e "\033[34m--------\033[0m"
+	echo  " "
 	echo  -e "\033[1;34mNAME OF THE VPN ? (default : "$namevpn") \033[0m"
-        read  namevpn1
-        echo  -e "\033[1;34mPRIVATE IP ? (default : "$ipvpn") \033[0m "
-        read  ipvpn1
-        echo  -e "\033[1;34mPUBLIC IP ?(default : "$ippublicvpn") \033[0m"
-        read  ippublicvpn1 
-        echo  -e "\033[1;34mPROTOCOLE OF THE VPN ? ( default : "$protovpn") \033[0m"
-        read  protovpn1 
-        echo  -e "\033[1;34mPORT OF THE VPN ? ( default : "$portvpn") \033[0m"
-        read  portvpn1
-        echo  -e "\033[1;34mCRYPTAGE VPN IN BITS ( default : "$cryptvpn") \033[0m"
-        read  cryptvpn1	
+	read  namevpn1
+	echo  -e "\033[1;34mPRIVATE IP ? (default : "$ipvpn") \033[0m "
+	read  ipvpn1
+	echo  -e "\033[1;34mPUBLIC IP ?(default : "$ippublicvpn") \033[0m"
+	read  ippublicvpn1 
+	echo  -e "\033[1;34mPROTOCOLE OF THE VPN ? ( default : "$protovpn") \033[0m"
+	read  protovpn1 
+	echo  -e "\033[1;34mPORT OF THE VPN ? ( default : "$portvpn") \033[0m"
+	read  portvpn1
+	echo  -e "\033[1;34mCRYPTAGE VPN IN BITS ( default : "$cryptvpn") \033[0m"
+	read  cryptvpn1	
 
 
 
 	echo   -e "\033[34m----------\033[0m"
-        echo   -e "\033[1;34mOPTIONAL\033[0m"
-        echo   -e "\033[34m----------\033[0m"
+	echo   -e "\033[1;34mOPTIONAL\033[0m"
+	echo   -e "\033[34m----------\033[0m"
 	echo   -e  "\033[1;32m IF YOU WANT , YOU CAN FILL IN EMPTY\033[0m"
 	echo   -e "\033[1;34m(OPTIONAL) Your country in 2 caracteres ? (Default :"$countryvpn")\033[0m"
-        read   countryvpn1 
+	read   countryvpn1 
 	echo   -e "\033[1;34m(OPTIONAL) Your province in 2 caracteres ? (Default :"$provincevpn")\033[0m"
-        read   provincevpn1
+	read   provincevpn1
 	echo   -e "\033[1;34m(OPTIONAL) Your city ? (Default :"$cityvpn") \033[0m"
-        read   cityvpn1
+	read   cityvpn1
 	echo   -e "\033[1;34m(OPTIONAL) Your Organization Name ? (Default :"$orgvpn") \033[0m"
-        read   orgvpn1
+	read   orgvpn1
 	echo   -e "\033[1;34m(OPTIONAL) Your organization unit name? (Default :"$ounvpn") \033[0m"
-        read   ounvpn1
+	read   ounvpn1
 	echo   -e "\033[1;34m(OPTIONAL) Your common name? (Default :"$commonvpn") \033[0m"
-        read   commonvpn1
+	read   commonvpn1
 	echo   -e "\033[1;34m(OPTIONAL) Your email address ? (Default :"$mailvpn") \033[0m"
-        read   mailvpn1
+	read   mailvpn1
 
 
 	#replace init value with new value if different with the default value
@@ -471,9 +473,9 @@ yes
 
 		#Generate Diffie-Hellman key exchange
 		./easyrsa build-server-full $namevpn nopass
-		 #generate  Diffie-Hellman
-                ./easyrsa gen-dh
 
+		#generate  Diffie-Hellman
+        ./easyrsa gen-dh
 		mkdir /etc/openvpn/client
 		chmod 755 /etc/openvpn/client
 
@@ -519,16 +521,35 @@ EOF
 		sysctl -p
 		if [ -e /etc/debian_version ]; then
 			sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
-			/etc/init.d/networking reload
+			if pgrep systemd-journal; then
+				systemctl restart openvpn@server.service
+			else
+				/etc/init.d/openvpn restart
+			fi
 
 		elif [ -e /etc/centos-release ]; then
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
-			/etc/init.d/network reload
+			if pgrep systemd-journal; then
+				systemctl restart openvpn@server.service
+				systemctl enable openvpn@server.service
+			else
+				service openvpn restart
+				chkconfig openvpn on
+			fi
 
 		elif [ -e /etc/fedora-release ]; then
-			/etc/init.d/network reload
+			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
+                    sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
+                    echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+			if pgrep systemd-journal; then
+				systemctl restart openvpn@server.service
+				systemctl enable openvpn@server.service
+			else
+				service openvpn restart
+				chkconfig openvpn on
+			fi
 
 		else
 			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
@@ -617,10 +638,10 @@ EOF
 		mkdir /etc/openvpn/client/$nameclient
 		chmod 755 /etc/openvpn/client/$nameclient
 
-        	cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
+        cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
 		cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
-        	cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
-        	cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
+        cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
+        cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
 
 		# start the script to create the client
 		cd /etc/openvpn
