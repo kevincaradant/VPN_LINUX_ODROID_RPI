@@ -3,6 +3,9 @@ racine=$(pwd)
 profileTxt=profile.txt
 profileTxtBackup=profile.txt.bak
 
+#in this script i get en because that want to say ethernet and i take always the ethernet device. In the futur, i will suggest the choose between wifi and ethernet ( wl or en ) 
+networkName=$(ls sys/class/net | grep en*)
+
 install_prog_required(){
 	echo  -e "\033[34m---------------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
@@ -78,11 +81,11 @@ initialiaze_variable(){
 	
 	# choose the good request with the OS 
 	if [ -e /etc/debian_version ]; then
-		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
 	elif [ -e /etc/centos-release ]; then
-		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet / {print $2}')
+		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet / {print $2}')
 	elif [ -e /etc/fedora-release ]; then
-		ipvpn=$(ifconfig eth0 2>/dev/null|awk '/inet / {print $2}')
+		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet / {print $2}')
 	else
 		unset ipvpn
 	fi
@@ -565,15 +568,15 @@ cat <<EOF > /etc/firewall.rules
 :INPUT ACCEPT
 :OUTPUT ACCEPT
 :POSTROUTING ACCEPT
--A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
--A POSTROUTING -o eth0 -j MASQUERADE
+-A POSTROUTING -s 10.8.0.0/24 -o $networkName -j MASQUERADE
+-A POSTROUTING -o $networkName -j MASQUERADE
 COMMIT
 *filter
 :INPUT ACCEPT
 :FORWARD DROP
 :OUTPUT ACCEPT
--A FORWARD -i eth0 -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
--A FORWARD -i tun0 -o eth0 -j ACCEPT
+-A FORWARD -i $networkName -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -i tun0 -o $networkName -j ACCEPT
 COMMIT
 EOF
 	chmod 755 /etc/firewall.rules
@@ -591,11 +594,11 @@ EOF
 		#restart service
 		service openvpn start
 	elif [ -e /etc/centos-release ]; then
-		chkconfig --add /etc/init.d/firewall
-		chkconfig firewall on
+		#chkconfig --add /etc/init.d/firewall
+		#chkconfig firewall on
 	elif [ -e /etc/fedora-release ]; then
-		chkconfig --add /etc/init.d/firewall
-		chkconfig firewall on
+		#chkconfig --add /etc/init.d/firewall
+		#chkconfig firewall on
 	else
 		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
 
