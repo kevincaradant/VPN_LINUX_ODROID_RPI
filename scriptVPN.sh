@@ -4,7 +4,7 @@ profileTxt=profile.txt
 profileTxtBackup=profile.txt.bak
 
 #in this script i get en because that want to say ethernet and i take always the ethernet device. In the futur, i will suggest the choose between wifi and ethernet ( wl or en ) 
-networkName=$(ls sys/class/net | grep en*)
+networkName=$(ls /sys/class/net | grep en*)
 
 install_prog_required(){
 	echo  -e "\033[34m---------------------------\033[0m"
