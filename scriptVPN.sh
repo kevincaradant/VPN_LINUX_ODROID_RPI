@@ -597,9 +597,16 @@ EOF
 	elif [ -e /etc/centos-release ]; then
 		#chkconfig --add /etc/init.d/firewall
 		#chkconfig firewall on
-		echo "nothing to auto start the script for the moment"
+		sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
+		sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
+		#echo "nothing to auto start the script for the moment"
 	elif [ -e /etc/fedora-release ]; then
-		echo "nothing to auto start the script for the moment"
+		#chkconfig --add /etc/init.d/firewall
+       	        #chkconfig firewall on
+               	sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
+                sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
+               	#echo "nothing to auto start the script for the moment"
+		#echo "nothing to auto start the script for the moment"
 		#chkconfig --add /etc/init.d/firewall
 		#chkconfig firewall on
 	else
