@@ -551,7 +551,7 @@ EOF
 		if [ -e /etc/debian_version ]; then
 			sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
 			if pgrep systemd-journal; then
-				systemctl restart openvpn@server.service
+				service openvpn restart
 				service iptables restart
 			else
 				/etc/init.d/openvpn restart
@@ -562,7 +562,7 @@ EOF
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
 			if pgrep systemd-journal; then
-				systemctl restart openvpn@server.service
+				service openvpn restart
 				systemctl enable openvpn@server.service
 				service iptables restart
 			else
@@ -576,7 +576,7 @@ EOF
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
 			if pgrep systemd-journal; then
-				systemctl restart openvpn@server.service
+				service openvpn restart
 				systemctl enable openvpn@server.service
 				service iptables restart
 			else
@@ -589,9 +589,6 @@ EOF
 			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
 
 		fi
-
-	service restart iptables
-	service openvpn start
 
 	if [ -e /etc/debian_version ]; then
 
@@ -630,22 +627,52 @@ EOF
 	elif [ -e /etc/centos-release ]; then
 		sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
 		sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
+		
+		#Load IPTABLE
+		iptables -F
+		iptables -X
+		iptables -t nat -F
+		iptables -t nat -X
+		iptables -t mangle -F
+		iptables -t mangle -X
+		iptables -P INPUT ACCEPT
+		iptables -P FORWARD ACCEPT
+		iptables -P OUTPUT ACCEPT
+		iptables -t nat -A POSTROUTING -o $networkName -j MASQUERADE
+
+
+
 
 #little hack because the iptable does not work after the boot if we don't restart the service before
 cat <<EOF > /etc/rc.d/rc.local
 #!/bin/sh
 service restart iptables
 EOF
+		chmod +x /etc/rc.d/rc.local
 
 	elif [ -e /etc/fedora-release ]; then
                	sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
                 sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
 
+		#Load IPTABLE
+		iptables -F
+		iptables -X
+		iptables -t nat -F
+		iptables -t nat -X
+		iptables -t mangle -F
+		iptables -t mangle -X
+		iptables -P INPUT ACCEPT
+		iptables -P FORWARD ACCEPT
+		iptables -P OUTPUT ACCEPT
+		iptables -t nat -A POSTROUTING -o $networkName -j MASQUERADE
+
+
 #little hack because the iptable does not work after the boot if we don't restart the service before
 cat <<EOF > /etc/rc.d/rc.local
 #!/bin/sh
 service restart iptables
 EOF
+		chmod +x /etc/rc.d/rc.local
 
 	else
 		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
