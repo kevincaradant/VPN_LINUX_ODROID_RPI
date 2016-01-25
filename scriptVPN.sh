@@ -4,7 +4,6 @@ profileTxt=profile.txt
 profileTxtBackup=profile.txt.bak
 
 #in this script i get en because that want to say ethernet and i take always the ethernet device. In the futur, i will suggest the choose between wifi and ethernet ( wl or en ) 
-networkName=$(ls /sys/class/net | grep en*)
 
 install_prog_required(){
 	echo  -e "\033[34m---------------------------\033[0m"
@@ -78,19 +77,8 @@ install_prog_required_centos(){
 initialiaze_variable(){
 	#preload l'ensemble des variables
 	namevpn=MyVPNServer
-	
-	# choose the good request with the OS 
-	if [ -e /etc/debian_version ]; then
-		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
-	elif [ -e /etc/centos-release ]; then
-		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet / {print $2}')
-	elif [ -e /etc/fedora-release ]; then
-		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet / {print $2}')
-	else
-		unset ipvpn
-	fi
-	
-	ippublicvpn=$(wget -qO- http://ipecho.net/plain ; echo);
+	devicevpn=ethernet
+	ippublicvpn=$(wget -qO- https://api.ipify.org/);
 	portvpn=443
 	protovpn=tcp
 	cryptvpn=2048
@@ -105,6 +93,7 @@ initialiaze_variable(){
 	#init variable
 	# allow to swich data for profile
 	unset namevpn1
+	unset devicevpn1
 	unset ipvpn1
 	unset ippublicvpn1
 	unset portvpn1
@@ -141,12 +130,41 @@ ask_info(){
 	echo  " "
 	echo  -e "\033[1;34mNAME OF THE VPN ? (default : "$namevpn") \033[0m"
 	read  namevpn1
-	echo  -e "\033[1;34mPRIVATE IP ? (default : "$ipvpn") \033[0m "
+	echo  -e "\033[1;34mNETWORK OF THE VPN => ethernet or wifi ( default : "$devicevpn") \033[0m"
+	read  devicevpn1
+
+	if [ "$devicevpn1" != "" ]
+	then
+		devicevpn=$devicevpn1
+	fi
+
+	if [ $devicevpn = "ethernet" ]; then
+		networkName=$(ls /sys/class/net | grep en)
+	elif [ $devicevpn = "wifi" ]; then
+		networkName=$(ls /sys/class/net | grep wl)
+	else
+		networkName=$(ls /sys/class/net | grep en)
+	fi
+	 
+	if [ -e /etc/debian_version ]; then
+		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+		if [ "$ipvpn" = "" ]; then
+			ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet adr:/ {print $2}'|sed 's/adr://')
+		fi
+	elif [ -e /etc/centos-release ]; then
+		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet / {print $2}')
+	elif [ -e /etc/fedora-release ]; then
+		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet / {print $2}')
+	else
+		unset ipvpn
+	fi
+
+	echo  -e "\033[1;34mPRIVATE IP ? (default : "$ipvpn") \033[0m"
 	read  ipvpn1
 	echo  -e "\033[1;34mPUBLIC IP ?(default : "$ippublicvpn") \033[0m"
-	read  ippublicvpn1 
+	read  ippublicvpn1
 	echo  -e "\033[1;34mPROTOCOLE OF THE VPN ? ( default : "$protovpn") \033[0m"
-	read  protovpn1 
+	read  protovpn1
 	echo  -e "\033[1;34mPORT OF THE VPN ? ( default : "$portvpn") \033[0m"
 	read  portvpn1
 	echo  -e "\033[1;34mCRYPTAGE VPN IN BITS ( default : "$cryptvpn") \033[0m"
@@ -236,6 +254,7 @@ ask_info(){
 	then
 		mailvpn=$mailvpn1
 	fi
+
 }
 
 
@@ -248,6 +267,7 @@ cat <<EOF > $racine/$profileTxt
 $namevpn
 $ipvpn
 $ippublicvpn
+$devicevpn
 $protovpn
 $portvpn
 $cryptvpn
@@ -285,16 +305,17 @@ read_profile_file(){
 	namevpn=${INFO[0]}
 	ipvpn=${INFO[1]}
 	ippublicvpn=${INFO[2]}
-	protovpn=${INFO[3]}
-	portvpn=${INFO[4]}
-	cryptvpn=${INFO[5]}
-	countryvpn=${INFO[6]}
-	provincevpn=${INFO[7]}
-	cityvpn=${INFO[8]}
-	orgvpn=${INFO[9]}
-	ounvpn=${INFO[10]}
-	commonvpn=${INFO[11]}
-	mailvpn=${INFO[12]}
+	devicevpn=${INFO[3]}
+	protovpn=${INFO[4]}
+	portvpn=${INFO[5]}
+	cryptvpn=${INFO[6]}
+	countryvpn=${INFO[7]}
+	provincevpn=${INFO[8]}
+	cityvpn=${INFO[9]}
+	orgvpn=${INFO[10]}
+	ounvpn=${INFO[11]}
+	commonvpn=${INFO[12]}
+	mailvpn=${INFO[13]}
 }
 
 show_profil(){
@@ -311,6 +332,7 @@ show_profil(){
 		echo -e "\033[1;34mIP private : \033[0m"$ipvpn
 		echo -e "\033[1;34mIP Public : \033[0m"$ippublicvpn
 		echo -e "\033[1;34mProtocol : \033[0m"$protovpn
+		echo -e "\033[1;34mDevice : \033[0m"$devicevpn
 		echo -e "\033[1;34mPort : \033[0m"$portvpn
 		echo -e "\033[1;34mCryptage : \033[0m"$cryptvpn" bits"
 		echo -e "\033[1;34mCountry certificat : \033[0m"$countryvpn
