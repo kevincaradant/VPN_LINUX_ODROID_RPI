@@ -639,8 +639,9 @@ EOF
 		iptables -P INPUT ACCEPT
 		iptables -P FORWARD ACCEPT
 		iptables -P OUTPUT ACCEPT
+		iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $networkName -j MASQUERADE
 		iptables -t nat -A POSTROUTING -o $networkName -j MASQUERADE
-
+		service iptables restart
 
 
 
@@ -667,7 +668,8 @@ EOF
 		iptables -P FORWARD ACCEPT
 		iptables -P OUTPUT ACCEPT
 		iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $networkName -j MASQUERADE
-
+		iptables -t nat -A POSTROUTING -o $networkName -j MASQUERADE
+		service iptables restart
 
 #little hack because the iptable does not work after the boot if we don't restart the service before
 cat <<EOF > /etc/rc.d/rc.local
@@ -718,10 +720,10 @@ EOF
 		mkdir /etc/openvpn/client/$nameclient
 		chmod 755 /etc/openvpn/client/$nameclient
 
-        cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
+        	cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
 		cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
-        cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
-        cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
+        	cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
+        	cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
 
 		# start the script to create the client
 		cd /etc/openvpn
