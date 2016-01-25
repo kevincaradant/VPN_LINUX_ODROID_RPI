@@ -552,6 +552,7 @@ EOF
 			sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
 			if pgrep systemd-journal; then
 				systemctl restart openvpn@server.service
+				service iptables restart
 			else
 				/etc/init.d/openvpn restart
 			fi
@@ -563,8 +564,10 @@ EOF
 			if pgrep systemd-journal; then
 				systemctl restart openvpn@server.service
 				systemctl enable openvpn@server.service
+				service iptables restart
 			else
 				service openvpn restart
+				service iptables restart
 				chkconfig openvpn on
 			fi
 
@@ -575,8 +578,10 @@ EOF
 			if pgrep systemd-journal; then
 				systemctl restart openvpn@server.service
 				systemctl enable openvpn@server.service
+				service iptables restart
 			else
 				service openvpn restart
+				service iptables restart
 				chkconfig openvpn on
 			fi
 
@@ -585,9 +590,12 @@ EOF
 
 		fi
 
+	service restart iptables
+	service openvpn start
 
+	if [ -e /etc/debian_version ]; then
 
-		# We still want the firewall to protect us from most incoming and outgoing network traffi
+# We still want the firewall to protect us from most incoming and outgoing network traffi
 cat <<EOF > /etc/firewall.rules
 *nat
 :PREROUTING ACCEPT
@@ -613,19 +621,32 @@ cat <<EOF > /etc/init.d/firewall
 EOF
 
 	chmod 755 /etc/init.d/firewall
-	
-	if [ -e /etc/debian_version ]; then
 		#Et on indique au système que ce script doit être lancé automatiquement au démarrage du système
 		update-rc.d firewall defaults
 		#restart service
 		service openvpn start
+		service iptables restart
 
 	elif [ -e /etc/centos-release ]; then
 		sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
 		sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
+
+#little hack because the iptable does not work after the boot if we don't restart the service before
+cat <<EOF > /etc/rc.d/rc.local
+#!/bin/sh
+service restart iptables
+EOF
+
 	elif [ -e /etc/fedora-release ]; then
                	sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
                 sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
+
+#little hack because the iptable does not work after the boot if we don't restart the service before
+cat <<EOF > /etc/rc.d/rc.local
+#!/bin/sh
+service restart iptables
+EOF
+
 	else
 		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
 
