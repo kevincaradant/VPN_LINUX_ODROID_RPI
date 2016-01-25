@@ -627,7 +627,8 @@ EOF
 	elif [ -e /etc/centos-release ]; then
 		sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
 		sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
-		
+		sed -i.bak 's/IPTABLES_SAVE_ON_COUNTER="no"/IPTABLES_SAVE_ON_COUNTER="yes"/i' /etc/sysconfig/iptables-config
+
 		#Load IPTABLE
 		iptables -F
 		iptables -X
@@ -646,13 +647,14 @@ EOF
 #little hack because the iptable does not work after the boot if we don't restart the service before
 cat <<EOF > /etc/rc.d/rc.local
 #!/bin/sh
-service restart iptables
+service iptables restart
 EOF
 		chmod +x /etc/rc.d/rc.local
 
 	elif [ -e /etc/fedora-release ]; then
                	sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
                 sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
+		sed -i.bak 's/IPTABLES_SAVE_ON_COUNTER="no"/IPTABLES_SAVE_ON_COUNTER="yes"/i' /etc/sysconfig/iptables-config
 
 		#Load IPTABLE
 		iptables -F
@@ -664,13 +666,13 @@ EOF
 		iptables -P INPUT ACCEPT
 		iptables -P FORWARD ACCEPT
 		iptables -P OUTPUT ACCEPT
-		iptables -t nat -A POSTROUTING -o $networkName -j MASQUERADE
+		iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $networkName -j MASQUERADE
 
 
 #little hack because the iptable does not work after the boot if we don't restart the service before
 cat <<EOF > /etc/rc.d/rc.local
 #!/bin/sh
-service restart iptables
+service iptables restart
 EOF
 		chmod +x /etc/rc.d/rc.local
 
