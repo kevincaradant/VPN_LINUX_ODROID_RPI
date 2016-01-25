@@ -509,6 +509,10 @@ ca ca.crt
 cert $namevpn.crt
 key $namevpn.key
 dh dh.pem
+sndbuf 256000
+rcvbuf 256000
+push "sndbuf 256000"
+push "rcvbuf 256000"
 status openvpn-status.log
 verb 3
 EOF
@@ -595,20 +599,11 @@ EOF
 		service openvpn start
 
 	elif [ -e /etc/centos-release ]; then
-		#chkconfig --add /etc/init.d/firewall
-		#chkconfig firewall on
 		sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
 		sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
-		#echo "nothing to auto start the script for the moment"
 	elif [ -e /etc/fedora-release ]; then
-		#chkconfig --add /etc/init.d/firewall
-       	        #chkconfig firewall on
                	sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
                 sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
-               	#echo "nothing to auto start the script for the moment"
-		#echo "nothing to auto start the script for the moment"
-		#chkconfig --add /etc/init.d/firewall
-		#chkconfig firewall on
 	else
 		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
 

@@ -43,5 +43,7 @@ echo  "cert "$NAME".crt" >> ./client/$NAME/$NAME$FILEEXT
 echo  "key "$NAME".key" >> ./client/$NAME/$NAME$FILEEXT
 echo  "persist-key" >> ./client/$NAME/$NAME$FILEEXT
 echo  "persist-tun" >> ./client/$NAME/$NAME$FILEEXT
+echo  "sndbuf 256000" >> ./client/$NAME/$NAME$FILEEXT
+echo  "rcvbuf 256000" >> ./client/$NAME/$NAME$FILEEXT
 echo  "comp-lzo" >> ./client/$NAME/$NAME$FILEEXT
 echo  "verb 3" >> ./client/$NAME/$NAME$FILEEXT
