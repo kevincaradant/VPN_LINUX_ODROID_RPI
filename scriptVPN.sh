@@ -555,8 +555,8 @@ key $namevpn.key
 dh dh.pem
 sndbuf $bufferOpenvpn
 rcvbuf $bufferOpenvpn
-push "sndbuf $bufferOpenvpn"""
-push "rcvbuf $bufferOpenvpn"""
+push "sndbuf $bufferOpenvpn"
+push "rcvbuf $bufferOpenvpn"
 status openvpn-status.log
 verb 3
 EOF
