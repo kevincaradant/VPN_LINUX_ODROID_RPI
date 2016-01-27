@@ -16,8 +16,6 @@ install_prog_required(){
 	apt-get install -y git
 	apt-get install -y wget
 	apt-get install -y openssl
-	# last version of openvpn
-	version=$(openvpn --version);
 
 	if [ ! -f ./openvpn-2.3.10.zip ]; then
 		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
@@ -52,7 +50,6 @@ install_prog_required_centos(){
 	yum install -y lzo-devel
 	yum install -y unzip
 	yum install -y openssl
-	version=$(openvpn --version);
 
 	# last version of openvpn
 	if [ ! -f ./openvpn-2.3.10.zip ]; then
@@ -77,6 +74,7 @@ install_prog_required_centos(){
 initialiaze_variable(){
 	#preload l'ensemble des variables
 	namevpn=MyVPNServer
+	bufferOpenvpn=0
 	devicevpn=ethernet
 	ippublicvpn=$(wget -qO- https://api.ipify.org/);
 	portvpn=443
@@ -90,7 +88,7 @@ initialiaze_variable(){
 	commonvpn=MyVPNServer
 	mailvpn=mail@example.com
 
-	#init variable
+	# init variable
 	# allow to swich data for profile
 	unset namevpn1
 	unset devicevpn1
@@ -99,6 +97,7 @@ initialiaze_variable(){
 	unset portvpn1
 	unset protovpn1
 	unset cryptvpn1
+	unset bufferOpenvpn1
 	unset countryvpn1
 	unset provincevpn1
 	unset cityvpn1
@@ -133,21 +132,34 @@ ask_info(){
 	echo  -e "\033[1;34mNETWORK OF THE VPN => ethernet or wifi ( default : "$devicevpn") \033[0m"
 	read  devicevpn1
 
+	#reset the var after the answer
 	if [ "$devicevpn1" != "" ]
 	then
 		devicevpn=$devicevpn1
 	fi
-
+	
+	# if you want to be in ethernet or wifi
 	if [ $devicevpn = "ethernet" ]; then
-		networkName=$(ls /sys/class/net | grep en)
+		networkName=$(ls /sys/class/net | grep eth0)
+
+		# if you use a new version (ubuntu > 14.04) 
+		if [ "$networkName" = "" ]; then
+			networkName=$(ls /sys/class/net | grep en)
+		fi
 	elif [ $devicevpn = "wifi" ]; then
 		networkName=$(ls /sys/class/net | grep wl)
 	else
-		networkName=$(ls /sys/class/net | grep en)
+		networkName=$(ls /sys/class/net | grep eth0)
+		if [ "$networkName" = "" ]; then
+			networkName=$(ls /sys/class/net | grep en)
+		fi
 	fi
-	 
+
+	# select in function of your distribution
 	if [ -e /etc/debian_version ]; then
 		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+		
+		#if you are on a old or new version of linux		
 		if [ "$ipvpn" = "" ]; then
 			ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet adr:/ {print $2}'|sed 's/adr://')
 		fi
@@ -168,10 +180,14 @@ ask_info(){
 	echo  -e "\033[1;34mPORT OF THE VPN ? ( default : "$portvpn") \033[0m"
 	read  portvpn1
 	echo  -e "\033[1;34mCRYPTAGE VPN IN BITS ( default : "$cryptvpn") \033[0m"
-	read  cryptvpn1	
-
-
-
+	read  cryptvpn1
+	echo " "
+	echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
+	echo -e "\033[1;31mWARNING. DO NOT CHANGE THE DEFAULT VALUE IF YOU DON'T KNOW WHAT IS THE BUFFER \033[0m"
+	echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
+	echo -e "\033[1;34mBUFFER OPENVPN ( default : "$bufferOpenvpn") \033[0m"
+	read  bufferOpenvpn1	
+	echo " "
 	echo   -e "\033[34m----------\033[0m"
 	echo   -e "\033[1;34mOPTIONAL\033[0m"
 	echo   -e "\033[34m----------\033[0m"
@@ -208,7 +224,6 @@ ask_info(){
 	then
 		ippublicvpn=$ippublicvpn1
 	fi
-	
 
 	if [ "$protovpn1" !=  "" ]
 	then
@@ -255,6 +270,10 @@ ask_info(){
 		mailvpn=$mailvpn1
 	fi
 
+	if [ "$bufferOpenvpn1" != "" ]
+	then
+		bufferOpenvpn=$bufferOpenvpn1
+	fi
 }
 
 
@@ -271,6 +290,7 @@ $devicevpn
 $protovpn
 $portvpn
 $cryptvpn
+$bufferOpenvpn
 $countryvpn
 $provincevpn
 $cityvpn
@@ -309,13 +329,14 @@ read_profile_file(){
 	protovpn=${INFO[4]}
 	portvpn=${INFO[5]}
 	cryptvpn=${INFO[6]}
-	countryvpn=${INFO[7]}
-	provincevpn=${INFO[8]}
-	cityvpn=${INFO[9]}
-	orgvpn=${INFO[10]}
-	ounvpn=${INFO[11]}
-	commonvpn=${INFO[12]}
-	mailvpn=${INFO[13]}
+	bufferOpenvpn=${INFO[7]}
+	countryvpn=${INFO[8]}
+	provincevpn=${INFO[9]}
+	cityvpn=${INFO[10]}
+	orgvpn=${INFO[11]}
+	ounvpn=${INFO[12]}
+	commonvpn=${INFO[13]}
+	mailvpn=${INFO[14]}
 }
 
 show_profil(){
@@ -335,6 +356,7 @@ show_profil(){
 		echo -e "\033[1;34mDevice : \033[0m"$devicevpn
 		echo -e "\033[1;34mPort : \033[0m"$portvpn
 		echo -e "\033[1;34mCryptage : \033[0m"$cryptvpn" bits"
+		echo -e "\033[1;34mBuffer R/W: \033[0m"$bufferOpenvpn
 		echo -e "\033[1;34mCountry certificat : \033[0m"$countryvpn
 		echo -e "\033[1;34mProvince certificat : \033[0m"$provincevpn
 		echo -e "\033[1;34mCity certificat : \033[0m"$cityvpn
@@ -476,7 +498,7 @@ do
 		esac
 
 		#cd ./scriptVPN_linux
-		mkdir /etc/openvpn/easyrsa3
+		mkdir -p /etc/openvpn/easyrsa3
 		cp -r $racine/easyrsa3/* /etc/openvpn/easyrsa3
 		cd /etc/openvpn/easyrsa3
 		cp vars.example vars
@@ -500,7 +522,7 @@ yes
 		./easyrsa build-server-full $namevpn nopass
 
 		#generate  Diffie-Hellman
-        ./easyrsa gen-dh
+        	./easyrsa gen-dh
 		mkdir /etc/openvpn/client
 		chmod 755 /etc/openvpn/client
 
@@ -531,10 +553,10 @@ ca ca.crt
 cert $namevpn.crt
 key $namevpn.key
 dh dh.pem
-sndbuf 256000
-rcvbuf 256000
-push "sndbuf 256000"
-push "rcvbuf 256000"
+sndbuf $bufferOpenvpn
+rcvbuf $bufferOpenvpn
+push "sndbuf" $bufferOpenvpn
+push "rcvbuf" $bufferOpenvpn
 status openvpn-status.log
 verb 3
 EOF
@@ -543,25 +565,20 @@ EOF
 		mkdir -p /dev/net
 		mknod /dev/net/tun c 10 200
 
-		
-		#uncomment the line : ipv4.ip_forward=1
-
 		#This command configures kernel parameters at runtime. The -p tells it to reload the file with the changes you just made.
 		sysctl -p
 		if [ -e /etc/debian_version ]; then
 			sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
 			if pgrep systemd-journal; then
 				service openvpn restart
-				service iptables restart
 			else
 				/etc/init.d/openvpn restart
 			fi
-
 		elif [ -e /etc/centos-release ]; then
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
-			if pgrep systemd-journal; then
+		    	if pgrep systemd-journal; then
 				service openvpn restart
 				systemctl enable openvpn@server.service
 				service iptables restart
@@ -570,7 +587,6 @@ EOF
 				service iptables restart
 				chkconfig openvpn on
 			fi
-
 		elif [ -e /etc/fedora-release ]; then
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
@@ -584,7 +600,6 @@ EOF
 				service iptables restart
 				chkconfig openvpn on
 			fi
-
 		else
 			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
 
@@ -610,19 +625,18 @@ COMMIT
 -A FORWARD -i tun0 -o $networkName -j ACCEPT
 COMMIT
 EOF
-	chmod 755 /etc/firewall.rules
+		chmod 755 /etc/firewall.rules
 
 cat <<EOF > /etc/init.d/firewall
 #!/bin/sh
 /sbin/iptables-restore /etc/firewall.rules
 EOF
 
-	chmod 755 /etc/init.d/firewall
+		chmod 755 /etc/init.d/firewall
 		#Et on indique au système que ce script doit être lancé automatiquement au démarrage du système
 		update-rc.d firewall defaults
 		#restart service
 		service openvpn start
-		service iptables restart
 
 	elif [ -e /etc/centos-release ]; then
 		sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
@@ -642,7 +656,6 @@ EOF
 		iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $networkName -j MASQUERADE
 		iptables -t nat -A POSTROUTING -o $networkName -j MASQUERADE
 		service iptables restart
-
 
 
 #little hack because the iptable does not work after the boot if we don't restart the service before
@@ -727,7 +740,7 @@ EOF
 
 		# start the script to create the client
 		cd /etc/openvpn
-		./makeOVPN.sh $nameclient
+		./makeOVPN.sh $nameclient $bufferopenvpn
 		chmod 755 -R /etc/openvpn
 		chmod 755 -R /etc/openvpn/easyrsa3/pki
 		unset nameclient
