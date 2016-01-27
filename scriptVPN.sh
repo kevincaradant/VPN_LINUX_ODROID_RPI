@@ -16,6 +16,7 @@ install_prog_required(){
 	apt-get install -y git
 	apt-get install -y wget
 	apt-get install -y openssl
+	apt-get install -y openvpn
 
 	if [ ! -f ./openvpn-2.3.10.zip ]; then
 		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
@@ -30,9 +31,7 @@ install_prog_required(){
 		./configure
 		make
 		make install
-	fi
-	
-	
+	fi	
 }
 
 
@@ -50,6 +49,7 @@ install_prog_required_centos(){
 	yum install -y lzo-devel
 	yum install -y unzip
 	yum install -y openssl
+	yum install -y openvpn
 
 	# last version of openvpn
 	if [ ! -f ./openvpn-2.3.10.zip ]; then
@@ -494,7 +494,7 @@ do
 			ask_info
 			#loop=1
 		
-		;;
+		;;		
 		esac
 
 		#cd ./scriptVPN_linux
@@ -555,8 +555,8 @@ key $namevpn.key
 dh dh.pem
 sndbuf $bufferOpenvpn
 rcvbuf $bufferOpenvpn
-push "sndbuf" $bufferOpenvpn
-push "rcvbuf" $bufferOpenvpn
+push "sndbuf $bufferOpenvpn"""
+push "rcvbuf $bufferOpenvpn"""
 status openvpn-status.log
 verb 3
 EOF
@@ -569,6 +569,8 @@ EOF
 		sysctl -p
 		if [ -e /etc/debian_version ]; then
 			sed -i.bak 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/i' /etc/sysctl.conf;
+			/etc/init.d/networking reload
+
 			if pgrep systemd-journal; then
 				service openvpn restart
 			else
@@ -578,6 +580,8 @@ EOF
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+			/etc/init.d/network reload
+
 		    	if pgrep systemd-journal; then
 				service openvpn restart
 				systemctl enable openvpn@server.service
@@ -591,6 +595,8 @@ EOF
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+			/etc/init.d/network reload
+
 			if pgrep systemd-journal; then
 				service openvpn restart
 				systemctl enable openvpn@server.service
@@ -718,12 +724,14 @@ EOF
 	  ;;
 
 	  "2" )
+		#change this default value by the answer of user
+		buffer=0
 	  	echo  -e "\033[34m--------------\033[0m"
 		echo  -e "\033[1;34mRENSEIGNEMENTS\033[0m"
 		echo  -e "\033[34m--------------\033[0m"
 		echo  "Name of the client ?"
 		read -e -p "$nameclient" nameclient
-
+		
 		#build the  key  but without pass
 		cd /etc/openvpn/easyrsa3/
 		source ./vars
@@ -740,7 +748,7 @@ EOF
 
 		# start the script to create the client
 		cd /etc/openvpn
-		./makeOVPN.sh $nameclient $bufferopenvpn
+		./makeOVPN.sh $nameclient $buffer
 		chmod 755 -R /etc/openvpn
 		chmod 755 -R /etc/openvpn/easyrsa3/pki
 		unset nameclient
