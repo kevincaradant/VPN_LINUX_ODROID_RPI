@@ -580,10 +580,10 @@ EOF
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
-			/etc/init.d/network reload
+			/etc/init.d/network restart
 
 		    	if pgrep systemd-journal; then
-				service openvpn restart
+				systemctl restart openvpn@server.service
 				systemctl enable openvpn@server.service
 				service iptables restart
 			else
@@ -595,10 +595,10 @@ EOF
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
                     sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
                     echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
-			/etc/init.d/network reload
+			/etc/init.d/network restart
 
 			if pgrep systemd-journal; then
-				service openvpn restart
+				systemctl restart openvpn@server.service
 				systemctl enable openvpn@server.service
 				service iptables restart
 			else
