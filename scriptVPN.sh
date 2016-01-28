@@ -724,14 +724,28 @@ EOF
 	  ;;
 
 	  "2" )
-		#change this default value by the answer of user
+		#default value
 		buffer=0
+		unset buffer1
+
 	  	echo  -e "\033[34m--------------\033[0m"
-		echo  -e "\033[1;34mRENSEIGNEMENTS\033[0m"
+		echo  -e "\033[1;34mINFORMATION\033[0m"
 		echo  -e "\033[34m--------------\033[0m"
 		echo  "Name of the client ?"
 		read -e -p "$nameclient" nameclient
-		
+		echo " "
+		echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
+		echo -e "\033[1;31mWARNING. DO NOT CHANGE THE DEFAULT VALUE IF YOU DON'T KNOW WHAT IS THE BUFFER \033[0m"
+		echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
+		echo -e "\033[1;34mBUFFER OPENVPN ( default : "$buffer") \033[0m"
+		read  buffer1	
+		echo " "
+
+		if [ "$buffer1" != "" ]
+		then
+			buffer=$buffer1
+		fi
+
 		#build the  key  but without pass
 		cd /etc/openvpn/easyrsa3/
 		source ./vars
