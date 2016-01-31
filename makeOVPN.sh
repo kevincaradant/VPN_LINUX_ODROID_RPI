@@ -5,7 +5,7 @@ DEFAULT="Default.txt"
 FILEEXT=".ovpn" 
 CRT=".crt" 
 KEY=".key" 
-CA="ca.crt" 
+CA="ca.crt"
 NAME=$1
 BUFFER=$2
  
@@ -16,14 +16,12 @@ if [ ! -f easyrsa3/pki/issued/$NAME$CRT ]; then
 fi 
 echo "Client’s cert found: $NAME$CR" 
  
- 
 #Then, verify that there is a private key for that client 
 if [ ! -f easyrsa3/pki/private/$NAME$KEY ]; then 
  echo "[ERROR]: Client Private Key not found: $NAME$KEY" 
  exit 
 fi 
 echo "Client’s Private Key found: $NAME$KEY"
- 
 
 #Confirm the tls-key key exists 
 if [ ! -f easyrsa3/tls-auth.key ]; then 

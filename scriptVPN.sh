@@ -3,20 +3,33 @@ racine=$(pwd)
 profileTxt=profile.txt
 profileTxtBackup=profile.txt.bak
 
+install_wget(){
+	if [ -e /etc/debian_version ]; then
+		apt-get install -y wget
+	elif [ -e /etc/centos-release ]; then
+		yum install -y wget
+	elif [ -e /etc/fedora-release ]; then
+		yum install -y wget
+	else
+		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
+		exit 4
+	fi
+}
+
 install_prog_required(){
-	echo  -e "\033[34m---------------------------\033[0m"
+	echo  -e "\033[34m-----------------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
-	echo  -e "\033[34m---------------------------\033[0m"
+	echo  -e "\033[34m-----------------------------\033[0m"
 	apt-get update
 
 	# lib required	
 	apt-get install -y net-tools
 	apt-get install -y iptables
 	apt-get install -y git
-	apt-get install -y wget
 	apt-get install -y openssl
 	apt-get install -y openvpn
 
+	#install openvpn2.3.10 because we new features with the buffer
 	if [ ! -f ./openvpn-2.3.10.zip ]; then
 		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
 		unzip openvpn-2.3.10.zip -d ./
@@ -36,21 +49,20 @@ install_prog_required(){
 
 
 install_prog_required_centos(){
-	echo  -e "\033[34m---------------------------\033[0m"
+	echo  -e "\033[34m-----------------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
-	echo  -e "\033[34m---------------------------\033[0m"
+	echo  -e "\033[34m-----------------------------\033[0m"
 
 	# lib required	
 	yum install -y net-tools
 	yum install -y iptables-services
 	yum install -y git
-	yum install -y wget
 	yum install -y lzo-devel
 	yum install -y unzip
 	yum install -y openssl
 	yum install -y openvpn
 
-	# last version of openvpn
+	#install openvpn2.3.10 because we new features with the buffer
 	if [ ! -f ./openvpn-2.3.10.zip ]; then
 		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
 		unzip openvpn-2.3.10.zip -d ./
@@ -107,9 +119,6 @@ initialize_variable(){
 	unset mailvpn1
 }
 
-
-initialize_variable
-
 ask_info(){
 	echo  -e "\033[34m--------\033[0m"
 	echo  -e "\033[1;34mREQUIRED!\033[0m"
@@ -159,23 +168,23 @@ ask_info(){
 		unset ipvpn
 	fi
 
-	echo  -e "\033[1;34mPRIVATE IP ? (default : "$ipvpn") \033[0m"
-	read  ipvpn1
-	echo  -e "\033[1;34mPUBLIC IP ?(default : "$ippublicvpn") \033[0m"
-	read  ippublicvpn1
-	echo  -e "\033[1;34mPROTOCOLE OF THE VPN ? ( default : "$protovpn") \033[0m"
-	read  protovpn1
-	echo  -e "\033[1;34mPORT OF THE VPN ? ( default : "$portvpn") \033[0m"
-	read  portvpn1
-	echo  -e "\033[1;34mCRYPTAGE VPN IN BITS ( default : "$cryptvpn") \033[0m"
-	read  cryptvpn1
-	echo " "
-	echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
-	echo -e "\033[1;31mWARNING. DO NOT CHANGE THE DEFAULT VALUE IF YOU DON'T KNOW WHAT IS THE BUFFER \033[0m"
-	echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
-	echo -e "\033[1;34mBUFFER OPENVPN ( default : "$bufferOpenvpn") \033[0m"
-	read  bufferOpenvpn1	
-	echo " "
+	echo   -e "\033[1;34mPRIVATE IP ? (default : "$ipvpn") \033[0m"
+	read   ipvpn1
+	echo   -e "\033[1;34mPUBLIC IP ?(default : "$ippublicvpn") \033[0m"
+	read   ippublicvpn1
+	echo   -e "\033[1;34mPROTOCOLE OF THE VPN ? ( default : "$protovpn") \033[0m"
+	read   protovpn1
+	echo   -e "\033[1;34mPORT OF THE VPN ? ( default : "$portvpn") \033[0m"
+	read   portvpn1
+	echo   -e "\033[1;34mCRYPTAGE VPN IN BITS ( default : "$cryptvpn") \033[0m"
+	read   cryptvpn1
+	echo   " "
+	echo   -e "\033[31m---------------------------------------------------------------------------\033[0m"
+	echo   -e "\033[1;31mWARNING. DO NOT CHANGE THE DEFAULT VALUE IF YOU DON'T KNOW WHAT IS THE BUFFER \033[0m"
+	echo   -e "\033[31m---------------------------------------------------------------------------\033[0m"
+	echo   -e "\033[1;34mBUFFER OPENVPN ( default : "$bufferOpenvpn") \033[0m"
+	read   bufferOpenvpn1	
+	echo   " "
 	echo   -e "\033[34m----------\033[0m"
 	echo   -e "\033[1;34mOPTIONAL\033[0m"
 	echo   -e "\033[34m----------\033[0m"
@@ -266,7 +275,7 @@ ask_info(){
 
 
 
-ask_save_profil(){
+ask_save_profile(){
 if [ ! -f $racine/$profileTxt ]
 then
 ask_info
@@ -295,7 +304,7 @@ cp $racine/$profileTxt $racine/$profileTxtBackup
 		echo " "
 		echo " "
 		echo  -e "\033[31m------------------------\033[0m"
-		echo  -e "\033[1;31mA PROFIL ALREADY EXIST\033[0m"
+		echo  -e "\033[1;31mA PROFILE ALREADY EXIST\033[0m"
 		echo  -e "\033[31m------------------------\033[0m"
 		echo " "
 		echo " "
@@ -327,7 +336,7 @@ read_profile_file(){
 	mailvpn=${INFO[14]}
 }
 
-show_profil(){
+show_profile(){
  #while there are something to read , we keep the data
 	if [ -f $racine/$profileTxt ]; then
 		read_profile_file
@@ -367,7 +376,7 @@ show_profil(){
 	fi
 }
 
-delete_profil(){
+delete_profile(){
 	if [ -f $racine/$profileTxt ]; then
 		rm $racine/$profileTxt
 
@@ -393,7 +402,7 @@ delete_profil(){
 	fi
 }
 
-restore_profil(){
+restore_profile(){
 	if [ -f $racine/$profileTxtBackup ]; then
 		cp $racine/$profileTxtBackup $racine/$profileTxt
 		echo " "
@@ -419,6 +428,7 @@ loop=0
 until [ $loop -eq 1 ]
 do
 	reponse=0
+
 	until [ $reponse -gt 0 > /dev/null 2>&1 ] && [ $reponse -lt 7 > /dev/null 2>&1 ]; do
 	echo  -e "\033[1;33mNB: I SUGGEST YOU TO REBOOT AFTER THE INSTALLATION\033[0m"
 	echo  -e "\033[34m-----------------------\033[0m"
@@ -443,18 +453,23 @@ do
 
 	case "$reponse" in
 
-	  "1" )
+	"1" )
 
 		if [ -e /etc/debian_version ]; then
 			install_prog_required
+			install_wget
 		elif [ -e /etc/centos-release ]; then
 			install_prog_required_centos
+			install_wget
 		elif [ -e /etc/fedora-release ]; then
 			install_prog_required_centos
+			install_wget
 		else
 			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
 			exit 4
 		fi
+
+		initialize_variable
 
 		until [ $profile -gt 0 > /dev/null 2>&1 ] && [ $profile -lt 3 > /dev/null 2>&1 ]; do
 		echo  -e "\033[34m--------------\033[0m"
@@ -725,7 +740,7 @@ EOF
 	chmod 755 -R /etc/openvpn
 	  ;;
 
-	  "2" )
+	"2" )
 		#default value
 		buffer=0
 		unset buffer1
@@ -772,19 +787,19 @@ EOF
 	  ;;
 
 	  "3" )
-		ask_save_profil
+		ask_save_profile
 	  ;;
 
 	  "4" )
-		show_profil
+		show_profile
 	  ;;
 
 	  "5" )
-		delete_profil
+		delete_profile
 	  ;;
 
 	 "6" )
-		restore_profil
+		restore_profile
 	  ;;
 
 	esac

@@ -1,9 +1,11 @@
 MyVPNServer
-192.168.1.1
-90.90.90.90
+192.169.1.1
+90.00.12.34
+ethernet
 tcp
 443
 2048
+0
 US
 NY
 New-York
