@@ -518,15 +518,18 @@ yes
 		./easyrsa build-server-full $namevpn nopass
 
 		#generate  Diffie-Hellman
-        	./easyrsa gen-dh
+        ./easyrsa gen-dh
 		mkdir /etc/openvpn/client
 		chmod 755 /etc/openvpn/client
+
+		openvpn --genkey --secret tls-auth.key
 
 		#move file in /etc/openvpn
 		cp pki/ca.crt /etc/openvpn
 		cp pki/private/$namevpn.key /etc/openvpn
 		cp pki/issued/$namevpn.crt /etc/openvpn
 		cp pki/reqs/$namevpn.req /etc/openvpn
+		cp tls-auth.key /etc/openvpn
 
 		#move file in /etc/openvpn
 		cp pki/dh.pem /etc/openvpn
@@ -548,6 +551,7 @@ push "dhcp-option DNS 8.8.4.4"
 ca ca.crt 
 cert $namevpn.crt
 key $namevpn.key
+tls-auth ./tls-auth.key 0
 dh dh.pem
 sndbuf $bufferOpenvpn
 rcvbuf $bufferOpenvpn
