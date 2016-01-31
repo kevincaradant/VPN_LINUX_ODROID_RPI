@@ -551,7 +551,7 @@ push "dhcp-option DNS 8.8.4.4"
 ca ca.crt 
 cert $namevpn.crt
 key $namevpn.key
-tls-auth ./tls-auth.key 0
+tls-auth tls-auth.key 0
 dh dh.pem
 sndbuf $bufferOpenvpn
 rcvbuf $bufferOpenvpn
@@ -761,6 +761,7 @@ EOF
 		cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
         	cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
         	cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
+		cp tls-auth.key /etc/openvpn/client/$nameclient
 
 		# start the script to create the client
 		cd /etc/openvpn
@@ -768,8 +769,6 @@ EOF
 		chmod 755 -R /etc/openvpn
 		chmod 755 -R /etc/openvpn/easyrsa3/pki
 		unset nameclient
-
-		#loop=1
 	  ;;
 
 	  "3" )

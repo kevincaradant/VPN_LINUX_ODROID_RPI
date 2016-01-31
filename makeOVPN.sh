@@ -24,12 +24,22 @@ if [ ! -f easyrsa3/pki/private/$NAME$KEY ]; then
 fi 
 echo "Client’s Private Key found: $NAME$KEY"
  
+
+#Confirm the tls-key key exists 
+if [ ! -f easyrsa3/tls-auth.key ]; then 
+ echo "[ERROR]: tls-auth Key not found: tls-auth.key" 
+ exit 
+fi 
+echo "tls-auth Key found: tls-auth.key" 
+
 #Confirm the CA public key exists 
 if [ ! -f easyrsa3/pki/$CA ]; then 
  echo "[ERROR]: CA Public Key not found: $CA" 
  exit 
 fi 
-echo "CA public Key found: $CA" 
+echo "CA public Key found: $CA"
+
+
  
 #Confirm the tls-auth ta key file exists 
  
