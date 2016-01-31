@@ -3,13 +3,12 @@ racine=$(pwd)
 profileTxt=profile.txt
 profileTxtBackup=profile.txt.bak
 
-#in this script i get en because that want to say ethernet and i take always the ethernet device. In the futur, i will suggest the choose between wifi and ethernet ( wl or en ) 
-
 install_prog_required(){
 	echo  -e "\033[34m---------------------------\033[0m"
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
 	echo  -e "\033[34m---------------------------\033[0m"
 	apt-get update
+
 	# lib required	
 	apt-get install -y net-tools
 	apt-get install -y iptables
@@ -71,8 +70,9 @@ install_prog_required_centos(){
 }
 
 
-initialiaze_variable(){
-	#preload l'ensemble des variables
+initialize_variable(){
+
+	#pre load all variable
 	namevpn=MyVPNServer
 	bufferOpenvpn=0
 	devicevpn=ethernet
@@ -88,8 +88,8 @@ initialiaze_variable(){
 	commonvpn=MyVPNServer
 	mailvpn=mail@example.com
 
-	# init variable
-	# allow to swich data for profile
+
+	# erase all the values of variables
 	unset namevpn1
 	unset devicevpn1
 	unset ipvpn1
@@ -108,19 +108,7 @@ initialiaze_variable(){
 }
 
 
-if [ -e /etc/debian_version ]; then
-	install_prog_required
-elif [ -e /etc/centos-release ]; then
-	install_prog_required_centos
-elif [ -e /etc/fedora-release ]; then
-	install_prog_required_centos
-else
-	echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
-	exit 4
-fi
-
-
-initialiaze_variable
+initialize_variable
 
 ask_info(){
 	echo  -e "\033[34m--------\033[0m"
@@ -208,7 +196,7 @@ ask_info(){
 	read   mailvpn1
 
 
-	#replace init value with new value if different with the default value
+	#replace init value with the new value if it's different with the default value
 	
 	if [ "$namevpn1" != "" ]
 	then
@@ -383,7 +371,7 @@ delete_profil(){
 	if [ -f $racine/$profileTxt ]; then
 		rm $racine/$profileTxt
 
-		initialiaze_variable
+		initialize_variable
 
 		echo " "
 		echo " "
@@ -428,8 +416,6 @@ restore_profil(){
 }
 
 loop=0
-#install programs required
-#install_prog_required
 until [ $loop -eq 1 ]
 do
 	reponse=0
@@ -458,6 +444,18 @@ do
 	case "$reponse" in
 
 	  "1" )
+
+		if [ -e /etc/debian_version ]; then
+			install_prog_required
+		elif [ -e /etc/centos-release ]; then
+			install_prog_required_centos
+		elif [ -e /etc/fedora-release ]; then
+			install_prog_required_centos
+		else
+			echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora or CentOS system"
+			exit 4
+		fi
+
 		until [ $profile -gt 0 > /dev/null 2>&1 ] && [ $profile -lt 3 > /dev/null 2>&1 ]; do
 		echo  -e "\033[34m--------------\033[0m"
 		echo  -e "\033[1;34mLOAD PROFILE ?\033[0m"
@@ -492,12 +490,10 @@ do
 			unset profile
 			unset reponse
 			ask_info
-			#loop=1
 		
 		;;		
 		esac
 
-		#cd ./scriptVPN_linux
 		mkdir -p /etc/openvpn/easyrsa3
 		cp -r $racine/easyrsa3/* /etc/openvpn/easyrsa3
 		cd /etc/openvpn/easyrsa3
@@ -540,7 +536,7 @@ cat <<EOF > /etc/openvpn/server.conf
 port $portvpn
 proto $protovpn
 dev tun
-comp-lzo
+comp-lzo no
 persist-key
 persist-tun
 keepalive 10 20
@@ -557,6 +553,8 @@ sndbuf $bufferOpenvpn
 rcvbuf $bufferOpenvpn
 push "sndbuf $bufferOpenvpn"
 push "rcvbuf $bufferOpenvpn"
+cipher AES-256-CBC
+auth SHA-256
 status openvpn-status.log
 verb 3
 EOF
