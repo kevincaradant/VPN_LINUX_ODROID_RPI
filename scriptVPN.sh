@@ -565,7 +565,7 @@ yes
 		mkdir /etc/openvpn/client
 		chmod 755 /etc/openvpn/client
 
-		if [ $tlsauthvpn == "ENABLED" ]
+		if [ "$tlsauthvpn" == "ENABLED" ]
 		then
 			openvpn --genkey --secret tls-auth.key
 			cp tls-auth.key /etc/openvpn
@@ -582,7 +582,7 @@ yes
 		cp pki/dh.pem /etc/openvpn
 
 
-		if [ $tlsauthvpn == "ENABLED" ]
+		if [ "$tlsauthvpn" == "ENABLED" ]
 		then
 #create server.conf
 cat <<EOF > /etc/openvpn/server.conf
@@ -614,7 +614,7 @@ verb 3
 EOF
 	fi
 
-	if [ $tlsauthvpn == "DISABLED" ]
+	if [ "$tlsauthvpn" == "DISABLED" ]
 	then
 #create server.conf
 cat <<EOF > /etc/openvpn/server.conf
@@ -812,6 +812,12 @@ EOF
 		buffer=0
 		unset buffer1
 
+		complzo=no
+		unset complzo1
+
+		tlsauth="DISABLED"
+		unset tlsauth1
+
 		echo  -e "\033[34m--------------\033[0m"
 		echo  -e "\033[1;34mINFORMATION\033[0m"
 		echo  -e "\033[34m--------------\033[0m"
@@ -823,11 +829,26 @@ EOF
 		echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
 		echo -e "\033[1;34mBUFFER OPENVPN ( default : "$buffer") \033[0m"
 		read  buffer1
+		echo -e "\033[1;34mCOMP LZ0 OPENVPN => yes or no ( default : "$complzo") \033[0m"
+		read  complzo1
+		echo " "
+		echo -e "\033[1;34mTLS-AUTH OPENVPN => ENABLED or DISABLED ( default : "$tlsauth") \033[0m"
+		read  tlsauth1
 		echo " "
 
 		if [ "$buffer1" != "" ]
 		then
 			buffer=$buffer1
+		fi
+
+		if [ "$complzo1" != "" ]
+		then
+			complzo=$complzo1
+		fi
+
+		if [ "$tlsauth1" != "" ]
+		then
+			tlsauth=$tlsauth1
 		fi
 
 		#build the  key  but without pass
@@ -844,7 +865,7 @@ EOF
 		cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
 		cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
 
-		if [ $tlsauthvpn == "ENABLED" ]
+		if [ "$tlsauth" == "ENABLED" ]
 		then
 			cp tls-auth.key /etc/openvpn/client/$nameclient
 		fi
@@ -853,7 +874,7 @@ EOF
 
 		# start the script to create the client
 		cd /etc/openvpn
-		./makeOVPN.sh $nameclient $buffer
+		./makeOVPN.sh $nameclient $buffer $complzo $tlsauth
 		chmod 755 -R /etc/openvpn
 		chmod 755 -R /etc/openvpn/easyrsa3/pki
 		unset nameclient
