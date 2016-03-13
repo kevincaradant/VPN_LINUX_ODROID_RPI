@@ -26,9 +26,11 @@ fi
 echo "Client’s Private Key found: $NAME$KEY"
 
 #Confirm the tls-key key exists
-if [ ! -f easyrsa3/tls-auth.key ]; then
- echo "[ERROR]: tls-auth Key not found: tls-auth.key"
- exit
+if [ "$TLSAUTH" == "ENABLED" ]; then
+ if [ ! -f easyrsa3/tls-auth.key ]; then
+   echo "[ERROR]: tls-auth Key not found: tls-auth.key"
+   exit
+ fi
 fi
 echo "tls-auth Key found: tls-auth.key"
 
