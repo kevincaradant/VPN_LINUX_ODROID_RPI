@@ -11,8 +11,6 @@ BUFFER=$2
 COMP=$3
 TLSAUTH=$4
 
-echo $TLSAUTH
-
 #1st Verify that client’s Public Key Exists
 if [ ! -f easyrsa3/pki/issued/$NAME$CRT ]; then
  echo "[ERROR]: Client Public Key Certificate not found: $NAME$CRT"
