@@ -22,7 +22,7 @@ install_prog_required(){
 	echo  -e "\033[34m-----------------------------\033[0m"
 	apt-get update
 
-	# lib required	
+	# lib required
 	apt-get install -y net-tools
 	apt-get install -y iptables
 	apt-get install -y git
@@ -34,16 +34,16 @@ install_prog_required(){
 		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
 		unzip openvpn-2.3.10.zip -d ./
 
-		# lib required to compile openvpn 
+		# lib required to compile openvpn
 		apt-get install gcc make automake autoconf dh-autoreconf file patch perl dh-make debhelper devscripts gnupg lintian quilt libtool pkg-config libssl-dev liblzo2-dev libpam0g-dev libpkcs11-helper1-dev -y
-	
+
 		#compile and install openvpn
 		cd openvpn-2.3.10
 		autoreconf -vi
 		./configure
 		make
 		make install
-	fi	
+	fi
 }
 
 
@@ -53,7 +53,7 @@ install_prog_required_centos(){
 	echo  -e "\033[1;34mINSTALLATION ABOUT REQUIRED\033[0m"
 	echo  -e "\033[34m-----------------------------\033[0m"
 
-	# lib required	
+	# lib required
 	yum install -y net-tools
 	yum install -y iptables-services
 	yum install -y git
@@ -67,9 +67,9 @@ install_prog_required_centos(){
 		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
 		unzip openvpn-2.3.10.zip -d ./
 
-		# lib required to compile openvpn 
+		# lib required to compile openvpn
 		yum install gcc make automake autoconf file patch perl gnupg quilt libtool rpm-build autoconf.noarch zlib-devel pam-devel openssl-devel -y
-	
+
 		#compile and install openvpn
 		cd openvpn-2.3.10
 		autoreconf -vi
@@ -78,7 +78,7 @@ install_prog_required_centos(){
 		make install
 	fi
 
-	
+
 }
 
 
@@ -92,6 +92,10 @@ initialize_variable(){
 	portvpn=443
 	protovpn=tcp
 	cryptvpn=2048
+	tlsauthvpn=DISABLED
+	complz0vpn=no
+	ciphercryptvpn=AES-256-CBC
+	authcryptvpn=SHA256
 	countryvpn=US
 	provincevpn=NY
 	cityvpn=New-York
@@ -109,6 +113,10 @@ initialize_variable(){
 	unset portvpn1
 	unset protovpn1
 	unset cryptvpn1
+	unset tlsauthvpn1
+	unset complz0vpn1
+	unset ciphercryptvpn1
+	unset authcryptvpn1
 	unset bufferOpenvpn1
 	unset countryvpn1
 	unset provincevpn1
@@ -134,12 +142,12 @@ ask_info(){
 	then
 		devicevpn=$devicevpn1
 	fi
-	
+
 	# if you want to be in ethernet or wifi
 	if [ $devicevpn = "ethernet" ]; then
 		networkName=$(ls /sys/class/net | grep eth0)
 
-		# if you use a new version (ubuntu > 14.04) 
+		# if you use a new version (ubuntu > 14.04)
 		if [ "$networkName" = "" ]; then
 			networkName=$(ls /sys/class/net | grep en)
 		fi
@@ -155,8 +163,8 @@ ask_info(){
 	# select in function of your distribution
 	if [ -e /etc/debian_version ]; then
 		ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
-		
-		#if you are on a old or new version of linux		
+
+		#if you are on a old or new version of linux
 		if [ "$ipvpn" = "" ]; then
 			ipvpn=$(ifconfig $networkName 2>/dev/null|awk '/inet adr:/ {print $2}'|sed 's/adr://')
 		fi
@@ -178,19 +186,23 @@ ask_info(){
 	read   portvpn1
 	echo   -e "\033[1;34mCRYPTAGE VPN IN BITS ( default : "$cryptvpn") \033[0m"
 	read   cryptvpn1
+	echo   -e "\033[1;34mTLS-AUTH => DESABLED or ENABLED( default : "$tlsauthvpn") \033[0m"
+	read   tlsauthvpn1
+	echo   -e "\033[1;34mCOMP-LZ0 => no or yes( default : "$complz0vpn") \033[0m"
+	read   complz0vpn1
 	echo   " "
 	echo   -e "\033[31m---------------------------------------------------------------------------\033[0m"
 	echo   -e "\033[1;31mWARNING. DO NOT CHANGE THE DEFAULT VALUE IF YOU DON'T KNOW WHAT IS THE BUFFER \033[0m"
 	echo   -e "\033[31m---------------------------------------------------------------------------\033[0m"
 	echo   -e "\033[1;34mBUFFER OPENVPN ( default : "$bufferOpenvpn") \033[0m"
-	read   bufferOpenvpn1	
+	read   bufferOpenvpn1
 	echo   " "
 	echo   -e "\033[34m----------\033[0m"
 	echo   -e "\033[1;34mOPTIONAL\033[0m"
 	echo   -e "\033[34m----------\033[0m"
 	echo   -e  "\033[1;32m IF YOU WANT , YOU CAN FILL IN EMPTY\033[0m"
 	echo   -e "\033[1;34m(OPTIONAL) Your country in 2 caracteres ? (Default :"$countryvpn")\033[0m"
-	read   countryvpn1 
+	read   countryvpn1
 	echo   -e "\033[1;34m(OPTIONAL) Your province in 2 caracteres ? (Default :"$provincevpn")\033[0m"
 	read   provincevpn1
 	echo   -e "\033[1;34m(OPTIONAL) Your city ? (Default :"$cityvpn") \033[0m"
@@ -206,17 +218,27 @@ ask_info(){
 
 
 	#replace init value with the new value if it's different with the default value
-	
+
 	if [ "$namevpn1" != "" ]
 	then
 		namevpn=$namevpn1
+	fi
+
+	if [ "$tlsauthvpn1" != "" ]
+	then
+		tlsauthvpn=$tlsauthvpn1
+	fi
+
+	if [ "$complz0vpn1" != "" ]
+	then
+		complz0vpn=$complz0vpn1
 	fi
 
 	if [ "$ipvpn1" !=  "" ]
 	then
 		ipvpn=$ipvpn1
 	fi
-	
+
 	if [ "$ippublicvpn1" !=  "" ]
 	then
 		ippublicvpn=$ippublicvpn1
@@ -226,22 +248,22 @@ ask_info(){
 	then
 		protovpn=$protovpn1
 	fi
-	
+
 	if [ "$portvpn1" != "" ]
 	then
 		portvpn=$portvpn1
 	fi
-	
+
 	if [ "$cryptvpn1" != "" ]
 	then
 		cryptvpn=$cryptvpn1
 	fi
-	
+
 	if [ "$countryvpn1" != "" ]
 	then
 		countryvpn=$countryvpn1
 	fi
-	
+
 	if [ "$provincevpn1" != "" ]
 	then
 		provincevpn=$provincevpn1
@@ -251,7 +273,7 @@ ask_info(){
 	then
 		cityvpn=$cityvpn1
 	fi
-	
+
 	if [ "$orgvpn1" != "" ]
 	then
 		orgvpn=$orgvpn1
@@ -287,6 +309,8 @@ $devicevpn
 $protovpn
 $portvpn
 $cryptvpn
+$tlsauthvpn
+$complz0vpn
 $bufferOpenvpn
 $countryvpn
 $provincevpn
@@ -308,7 +332,7 @@ cp $racine/$profileTxt $racine/$profileTxtBackup
 		echo  -e "\033[31m------------------------\033[0m"
 		echo " "
 		echo " "
-		
+
 	fi
 }
 
@@ -326,14 +350,16 @@ read_profile_file(){
 	protovpn=${INFO[4]}
 	portvpn=${INFO[5]}
 	cryptvpn=${INFO[6]}
-	bufferOpenvpn=${INFO[7]}
-	countryvpn=${INFO[8]}
-	provincevpn=${INFO[9]}
-	cityvpn=${INFO[10]}
-	orgvpn=${INFO[11]}
-	ounvpn=${INFO[12]}
-	commonvpn=${INFO[13]}
-	mailvpn=${INFO[14]}
+	tlsauthvpn=${INFO[7]}
+	complz0vpn=${INFO[8]}
+	bufferOpenvpn=${INFO[9]}
+	countryvpn=${INFO[10]}
+	provincevpn=${INFO[11]}
+	cityvpn=${INFO[12]}
+	orgvpn=${INFO[13]}
+	ounvpn=${INFO[14]}
+	commonvpn=${INFO[15]}
+	mailvpn=${INFO[16]}
 }
 
 show_profile(){
@@ -353,6 +379,8 @@ show_profile(){
 		echo -e "\033[1;34mDevice : \033[0m"$devicevpn
 		echo -e "\033[1;34mPort : \033[0m"$portvpn
 		echo -e "\033[1;34mCryptage : \033[0m"$cryptvpn" bits"
+		echo -e "\033[1;34mTls-auth : \033[0m"$tlsauthvpn
+		echo -e "\033[1;34mComp LZO : \033[0m"$complz0vpn
 		echo -e "\033[1;34mBuffer R/W: \033[0m"$bufferOpenvpn
 		echo -e "\033[1;34mCountry certificat : \033[0m"$countryvpn
 		echo -e "\033[1;34mProvince certificat : \033[0m"$provincevpn
@@ -372,7 +400,7 @@ show_profile(){
 		echo  -e "\033[31m------------------------\033[0m"
 		echo " "
 		echo " "
-		
+
 	fi
 }
 
@@ -389,7 +417,7 @@ delete_profile(){
 		echo  -e "\033[32m----------------------------\033[0m"
 		echo " "
 		echo " "
-		
+
 	else
 		echo " "
 		echo " "
@@ -398,7 +426,7 @@ delete_profile(){
 		echo -e "\033[31m--------------------------\033[0m"
 		echo " "
 		echo " "
-		
+
 	fi
 }
 
@@ -406,7 +434,7 @@ restore_profile(){
 	if [ -f $racine/$profileTxtBackup ]; then
 		cp $racine/$profileTxtBackup $racine/$profileTxt
 		echo " "
-		echo " "		
+		echo " "
 		echo  -e "\033[32m-----------------------------\033[0m"
 		echo  -e "\033[1;32mPROFILE RESTORED WITH SUCCESS\033[0m"
 		echo  -e "\033[32m-----------------------------\033[0m"
@@ -490,7 +518,7 @@ do
 				unset profile
 				unset reponse
 				read_profile_file
-				
+
 			else
 				echo -e "\033[31m----------------\033[0m"
 				echo -e "\033[1;31mNO PROFILE FOUND\033[0m"
@@ -505,8 +533,8 @@ do
 			unset profile
 			unset reponse
 			ask_info
-		
-		;;		
+
+		;;
 		esac
 
 		mkdir -p /etc/openvpn/easyrsa3
@@ -533,28 +561,35 @@ yes
 		./easyrsa build-server-full $namevpn nopass
 
 		#generate  Diffie-Hellman
-        ./easyrsa gen-dh
+				./easyrsa gen-dh
 		mkdir /etc/openvpn/client
 		chmod 755 /etc/openvpn/client
 
-		openvpn --genkey --secret tls-auth.key
+		if [ $tlsauthvpn == "ENABLED" ]
+		then
+			openvpn --genkey --secret tls-auth.key
+			cp tls-auth.key /etc/openvpn
+		fi
 
 		#move file in /etc/openvpn
 		cp pki/ca.crt /etc/openvpn
 		cp pki/private/$namevpn.key /etc/openvpn
 		cp pki/issued/$namevpn.crt /etc/openvpn
 		cp pki/reqs/$namevpn.req /etc/openvpn
-		cp tls-auth.key /etc/openvpn
+
 
 		#move file in /etc/openvpn
 		cp pki/dh.pem /etc/openvpn
 
-		#create server.conf
+
+		if [ $tlsauthvpn == "ENABLED" ]
+		then
+#create server.conf
 cat <<EOF > /etc/openvpn/server.conf
 port $portvpn
 proto $protovpn
 dev tun
-comp-lzo no
+comp-lzo $complz0vpn
 persist-key
 persist-tun
 keepalive 10 20
@@ -563,7 +598,7 @@ ifconfig-pool-persist ipp.txt
 push "redirect-gateway def1 bypass-dhcp"
 push "dhcp-option DNS 8.8.8.8"
 push "dhcp-option DNS 8.8.4.4"
-ca ca.crt 
+ca ca.crt
 cert $namevpn.crt
 key $namevpn.key
 tls-auth tls-auth.key 0
@@ -577,6 +612,38 @@ auth SHA-256
 status openvpn-status.log
 verb 3
 EOF
+	fi
+
+	if [ $tlsauthvpn == "DISABLED" ]
+	then
+#create server.conf
+cat <<EOF > /etc/openvpn/server.conf
+port $portvpn
+proto $protovpn
+dev tun
+comp-lzo $complz0vpn
+persist-key
+persist-tun
+keepalive 10 20
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+ca ca.crt
+cert $namevpn.crt
+key $namevpn.key
+dh dh.pem
+sndbuf $bufferOpenvpn
+rcvbuf $bufferOpenvpn
+push "sndbuf $bufferOpenvpn"
+push "rcvbuf $bufferOpenvpn"
+cipher AES-256-CBC
+auth SHA-256
+status openvpn-status.log
+verb 3
+EOF
+	fi
 
 		# add TUN/TAP if desabled
 		mkdir -p /dev/net
@@ -595,11 +662,11 @@ EOF
 			fi
 		elif [ -e /etc/centos-release ]; then
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
-                    sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
-                    echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+										sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
+										echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
 			/etc/init.d/network restart
 
-		    	if pgrep systemd-journal; then
+					if pgrep systemd-journal; then
 				systemctl restart openvpn@server.service
 				systemctl enable openvpn@server.service
 				service iptables restart
@@ -610,8 +677,8 @@ EOF
 			fi
 		elif [ -e /etc/fedora-release ]; then
 			grep ^net.ipv4.ip_forward /etc/sysctl.conf > /dev/null 2>&1 && \
-                    sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
-                    echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+										sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward = 1/' /etc/sysctl.conf  || \
+										echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
 			/etc/init.d/network restart
 
 			if pgrep systemd-journal; then
@@ -689,8 +756,8 @@ EOF
 		chmod +x /etc/rc.d/rc.local
 
 	elif [ -e /etc/fedora-release ]; then
-               	sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
-                sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
+								sed -i.bak 's/IPTABLES_SAVE_ON_STOP="no"/IPTABLES_SAVE_ON_STOP="yes"/i' /etc/sysconfig/iptables-config
+								sed -i.bak 's/IPTABLES_SAVE_ON_RESTART="no"/IPTABLES_SAVE_ON_RESTART="yes"/i' /etc/sysconfig/iptables-config
 		sed -i.bak 's/IPTABLES_SAVE_ON_COUNTER="no"/IPTABLES_SAVE_ON_COUNTER="yes"/i' /etc/sysconfig/iptables-config
 
 		#Load IPTABLE
@@ -719,7 +786,7 @@ EOF
 
 	fi
 
-	
+
 
 	#initialize the config for client
 	cd /etc/openvpn/easyrsa3
@@ -735,17 +802,17 @@ EOF
 	cp  $racine/makeOVPN.sh /etc/openvpn/
 	chmod 755 -R /etc/openvpn
 
-	#reboot to finish to install some last things	
+	#reboot to finish to install some last things
 	service openvpn restart
 	chmod 755 -R /etc/openvpn
-	  ;;
+		;;
 
 	"2" )
 		#default value
 		buffer=0
 		unset buffer1
 
-	  	echo  -e "\033[34m--------------\033[0m"
+		echo  -e "\033[34m--------------\033[0m"
 		echo  -e "\033[1;34mINFORMATION\033[0m"
 		echo  -e "\033[34m--------------\033[0m"
 		echo  "Name of the client ?"
@@ -755,7 +822,7 @@ EOF
 		echo -e "\033[1;31mWARNING. DO NOT CHANGE THE DEFAULT VALUE IF YOU DON'T KNOW WHAT IS THE BUFFER \033[0m"
 		echo -e "\033[31m---------------------------------------------------------------------------\033[0m"
 		echo -e "\033[1;34mBUFFER OPENVPN ( default : "$buffer") \033[0m"
-		read  buffer1	
+		read  buffer1
 		echo " "
 
 		if [ "$buffer1" != "" ]
@@ -772,11 +839,17 @@ EOF
 		mkdir /etc/openvpn/client/$nameclient
 		chmod 755 /etc/openvpn/client/$nameclient
 
-        	cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
+		cp /etc/openvpn/ca.crt /etc/openvpn/client/$nameclient
 		cp pki/private/$nameclient.key /etc/openvpn/client/$nameclient
-        	cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
-        	cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
-		cp tls-auth.key /etc/openvpn/client/$nameclient
+		cp pki/issued/$nameclient.crt /etc/openvpn/client/$nameclient
+		cp pki/reqs/$nameclient.req /etc/openvpn/client/$nameclient
+
+		if [ $tlsauthvpn == "ENABLED" ]
+		then
+			cp tls-auth.key /etc/openvpn/client/$nameclient
+		fi
+
+
 
 		# start the script to create the client
 		cd /etc/openvpn
@@ -784,25 +857,24 @@ EOF
 		chmod 755 -R /etc/openvpn
 		chmod 755 -R /etc/openvpn/easyrsa3/pki
 		unset nameclient
-	  ;;
+		;;
 
-	  "3" )
+		"3" )
 		ask_save_profile
-	  ;;
+		;;
 
-	  "4" )
+		"4" )
 		show_profile
-	  ;;
+		;;
 
-	  "5" )
+		"5" )
 		delete_profile
-	  ;;
+		;;
 
 	 "6" )
 		restore_profile
-	  ;;
+		;;
 
 	esac
 done
 exit
-
