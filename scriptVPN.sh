@@ -29,16 +29,16 @@ install_prog_required(){
 	apt-get install -y openssl
 	apt-get install -y openvpn
 
-	#install openvpn2.3.10 because we new features with the buffer
-	if [ ! -f ./openvpn-2.3.10.zip ]; then
-		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
-		unzip openvpn-2.3.10.zip -d ./
+	#install openvpn2.3.14 because we new features with the buffer
+	if [ ! -f ./openvpn-2.3.14.zip ]; then
+		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.14.zip
+		unzip openvpn-2.3.14.zip -d ./
 
 		# lib required to compile openvpn
 		apt-get install gcc make automake autoconf dh-autoreconf file patch perl dh-make debhelper devscripts gnupg lintian quilt libtool pkg-config libssl-dev liblzo2-dev libpam0g-dev libpkcs11-helper1-dev -y
 
 		#compile and install openvpn
-		cd openvpn-2.3.10
+		cd openvpn-2.3.14
 		autoreconf -vi
 		./configure
 		make
@@ -62,16 +62,16 @@ install_prog_required_centos(){
 	yum install -y openssl
 	yum install -y openvpn
 
-	#install openvpn2.3.10 because we new features with the buffer
-	if [ ! -f ./openvpn-2.3.10.zip ]; then
-		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.10.zip
-		unzip openvpn-2.3.10.zip -d ./
+	#install openvpn2.3.14 because we new features with the buffer
+	if [ ! -f ./openvpn-2.3.14.zip ]; then
+		wget https://swupdate.openvpn.org/community/releases/openvpn-2.3.14.zip
+		unzip openvpn-2.3.14.zip -d ./
 
 		# lib required to compile openvpn
 		yum install gcc make automake autoconf file patch perl gnupg quilt libtool rpm-build autoconf.noarch zlib-devel pam-devel openssl-devel -y
 
 		#compile and install openvpn
-		cd openvpn-2.3.10
+		cd openvpn-2.3.14
 		autoreconf -vi
 		./configure
 		make
@@ -607,8 +607,8 @@ sndbuf $bufferOpenvpn
 rcvbuf $bufferOpenvpn
 push "sndbuf $bufferOpenvpn"
 push "rcvbuf $bufferOpenvpn"
-cipher AES-256-CBC
-auth SHA-256
+cipher $ciphercryptvpn
+auth $authcryptvpn
 status openvpn-status.log
 verb 3
 EOF
@@ -638,8 +638,8 @@ sndbuf $bufferOpenvpn
 rcvbuf $bufferOpenvpn
 push "sndbuf $bufferOpenvpn"
 push "rcvbuf $bufferOpenvpn"
-cipher AES-256-CBC
-auth SHA-256
+cipher $ciphercryptvpn
+auth $authcryptvpn
 status openvpn-status.log
 verb 3
 EOF
@@ -818,6 +818,10 @@ EOF
 		tlsauth="DISABLED"
 		unset tlsauth1
 
+    ciphercryptvpn=AES-256-CBC
+
+    authcryptvpn=SHA256
+
 		echo  -e "\033[34m--------------\033[0m"
 		echo  -e "\033[1;34mINFORMATION\033[0m"
 		echo  -e "\033[34m--------------\033[0m"
@@ -874,7 +878,7 @@ EOF
 
 		# start the script to create the client
 		cd /etc/openvpn
-		./makeOVPN.sh $nameclient $buffer $complzo $tlsauth
+		./makeOVPN.sh $nameclient $buffer $complzo $tlsauth $ciphercryptvpn $authcryptvpn
 		chmod 755 -R /etc/openvpn
 		chmod 755 -R /etc/openvpn/easyrsa3/pki
 		unset nameclient

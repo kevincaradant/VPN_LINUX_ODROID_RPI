@@ -10,6 +10,8 @@ NAME=$1
 BUFFER=$2
 COMP=$3
 TLSAUTH=$4
+CIPHERAUTH=$5
+AUTH=$6
 
 #1st Verify that client’s Public Key Exists
 if [ ! -f easyrsa3/pki/issued/$NAME$CRT ]; then
@@ -63,8 +65,8 @@ fi
 echo  "sndbuf $BUFFER" >> ./client/$NAME/$NAME$FILEEXT
 echo  "rcvbuf $BUFFER" >> ./client/$NAME/$NAME$FILEEXT
 echo  "comp-lzo $COMP" >> ./client/$NAME/$NAME$FILEEXT
-echo  "cipher AES-256-CBC" >> ./client/$NAME/$NAME$FILEEXT
-echo  "auth SHA256" >> ./client/$NAME/$NAME$FILEEXT
+echo  "cipher $CIPHERAUTH" >> ./client/$NAME/$NAME$FILEEXT
+echo  "auth $AUTH" >> ./client/$NAME/$NAME$FILEEXT
 
 
 
